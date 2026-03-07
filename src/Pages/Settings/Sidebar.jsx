@@ -16,6 +16,18 @@ function Sidebar({ selected = "blocked", onSelect = () => {} }) {
 
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <button
+            onClick={() => onSelect("profile")}
+            className={`w-full flex items-center justify-between py-3 px-2 text-left rounded-md ${selected === "profile" ? "bg-transparent" : "hover:bg-gray-50"}`}
+          >
+            <span
+              className={`${selected === "profile" ? "font-semibold text-gray-800" : "text-gray-700"}`}
+            >
+              Profile
+            </span>
+            <FiChevronRight className="text-gray-400" />
+          </button>
+
+          <button
             onClick={() => onSelect("account")}
             className={`w-full flex items-center justify-between py-3 px-2 text-left rounded-md ${selected === "account" ? "bg-transparent" : "hover:bg-gray-50"}`}
           >
@@ -47,6 +59,30 @@ function Sidebar({ selected = "blocked", onSelect = () => {} }) {
               className={`${selected === "blocked" ? "font-semibold text-gray-800" : "text-gray-700"}`}
             >
               Blocked Users
+            </span>
+            <FiChevronRight className="text-gray-400" />
+          </button>
+
+          <button
+            onClick={() => onSelect("terms")}
+            className={`w-full flex items-center justify-between py-3 px-2 text-left rounded-md mt-2 ${selected === "terms" ? "bg-transparent" : "hover:bg-gray-50"}`}
+          >
+            <span
+              className={`${selected === "terms" ? "font-semibold text-gray-800" : "text-gray-700"}`}
+            >
+              Terms and Conditions
+            </span>
+            <FiChevronRight className="text-gray-400" />
+          </button>
+
+          <button
+            onClick={() => onSelect("privacy")}
+            className={`w-full flex items-center justify-between py-3 px-2 text-left rounded-md mt-2 ${selected === "privacy" ? "bg-transparent" : "hover:bg-gray-50"}`}
+          >
+            <span
+              className={`${selected === "privacy" ? "font-semibold text-gray-800" : "text-gray-700"}`}
+            >
+              Privacy Policy
             </span>
             <FiChevronRight className="text-gray-400" />
           </button>

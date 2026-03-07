@@ -4,19 +4,29 @@ import { IoMdAddCircleOutline } from "react-icons/io";
 import { CgProfile } from "react-icons/cg";
 import { FaRegBookmark } from "react-icons/fa6";
 import { FiMessageCircle, FiCreditCard } from "react-icons/fi";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
-function Sidebar({ setMainView }) {
+function Sidebar() {
+  const location = useLocation();
   return (
     <aside className="w-full">
       <nav className="flex flex-col">
-        <button
-          onClick={() => setMainView && setMainView("feed")}
-          className="flex items-center gap-3 bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white px-4 py-3 rounded-md"
-        >
-          <GrHomeRounded className="text-white text-xl" />
-          <span className="font-semibold">Home</span>
-        </button>
+        <Link to="/">
+          <button
+            className={`flex items-center gap-3 w-full px-4 py-3 rounded-md ${
+              location.pathname === "/"
+                ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            <GrHomeRounded
+              className={`text-xl ${location.pathname === "/" ? "text-white" : "text-gray-700"}`}
+            />
+            <span className={location.pathname === "/" ? "font-semibold" : ""}>
+              Home
+            </span>
+          </button>
+        </Link>
 
         <div className="mt-4 flex flex-col gap-3 text-gray-700">
           <button
@@ -29,23 +39,81 @@ function Sidebar({ setMainView }) {
             <span>Create Poll</span>
           </button>
 
-          <button className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50">
-            <CgProfile className="text-xl text-gray-700" />
-            <span>My Profile</span>
-          </button>
+          <Link to="/user">
+            <button
+              className={`flex items-center gap-3 w-full px-3 py-2 rounded-md ${
+                location.pathname === "/user" || location.pathname === "/user/"
+                  ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white"
+                  : "text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <CgProfile
+                className={`text-xl ${location.pathname === "/user" || location.pathname === "/user/" ? "text-white" : "text-gray-700"}`}
+              />
+              <span
+                className={
+                  location.pathname === "/user" ||
+                  location.pathname === "/user/"
+                    ? "font-semibold"
+                    : ""
+                }
+              >
+                My Profile
+              </span>
+            </button>
+          </Link>
 
-          <button
-            onClick={() => setMainView && setMainView("saved")}
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50"
+          <Link
+            to="/saved"
+            className={`flex items-center gap-3 px-3 py-2 rounded-md ${
+              location.pathname === "/saved" || location.pathname === "/saved/"
+                ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
           >
-            <FaRegBookmark className="text-lg text-gray-700" />
-            <span>Saved Polls</span>
-          </button>
+            <FaRegBookmark
+              className={`text-lg ${
+                location.pathname === "/saved" ||
+                location.pathname === "/saved/"
+                  ? "text-white"
+                  : "text-gray-700"
+              }`}
+            />
+            <span
+              className={
+                location.pathname === "/saved" ||
+                location.pathname === "/saved/"
+                  ? "font-semibold"
+                  : ""
+              }
+            >
+              Saved Polls
+            </span>
+          </Link>
 
-          <button className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50">
-            <FiMessageCircle className="text-xl text-gray-700" />
-            <span>Messages</span>
-          </button>
+          <Link
+            to="/messages"
+            className={`flex items-center gap-3 px-3 py-2 rounded-md ${
+              location.pathname === "/messages" ||
+              location.pathname === "/messages/"
+                ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            <FiMessageCircle
+              className={`text-xl ${location.pathname === "/messages" || location.pathname === "/messages/" ? "text-white" : "text-gray-700"}`}
+            />
+            <span
+              className={
+                location.pathname === "/messages" ||
+                location.pathname === "/messages/"
+                  ? "font-semibold"
+                  : ""
+              }
+            >
+              Messages
+            </span>
+          </Link>
         </div>
 
         <div className="mt-5 border-t pt-4">

@@ -35,9 +35,9 @@ export default function PremiumHome() {
             <IoMdArrowRoundBack className="text-lg" />
             Back
           </Link>
-          <div className="text-sm font-medium text-gray-800">
+          {/* <div className="text-sm font-medium text-gray-800">
             Upgrade to Premium
-          </div>
+          </div> */}
           <div />
         </div>
 

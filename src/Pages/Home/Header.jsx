@@ -31,8 +31,6 @@ function Header() {
   const menuItems = [
     { label: "Settings", Icon: CiSettings },
     { label: "Recent Activity", Icon: MdOutlineSettingsBackupRestore },
-    { label: "Terms & Conditions", Icon: MdOutlineEventNote },
-    { label: "Privacy Policy", Icon: MdOutlinePrivacyTip },
     { label: "Log out", Icon: IoIosLogOut },
   ];
 
@@ -104,12 +102,6 @@ function Header() {
                             break;
                           case "Recent Activity":
                             navigate("/activity");
-                            break;
-                          case "Terms & Conditions":
-                            navigate("/terms");
-                            break;
-                          case "Privacy Policy":
-                            navigate("/privacy");
                             break;
                           case "Log out":
                             navigate("/logout");

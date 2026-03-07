@@ -4,6 +4,8 @@ import Sidebar from "./Sidebar";
 import Password from "./Password";
 import BlockedUser from "./BlockedUser";
 import Accounts from "./Accounts";
+import Documentations from "./Documentations";
+import Profile from "./Profile";
 
 const SettingsHome = () => {
   const [selected, setSelected] = useState("blocked");
@@ -27,9 +29,12 @@ const SettingsHome = () => {
           </div>
 
           <div className="col-span-9">
+            {selected === "profile" && <Profile />}
             {selected === "account" && <Accounts />}
             {selected === "password" && <Password />}
             {selected === "blocked" && <BlockedUser />}
+            {selected === "terms" && <Documentations type="terms" />}
+            {selected === "privacy" && <Documentations type="privacy" />}
           </div>
         </div>
       </div>

@@ -87,13 +87,15 @@ function PollCard() {
             <div className="flex items-center justify-center gap-2">
               <button
                 onClick={() => setLiked(!liked)}
-                className="flex items-center gap-2 text-gray-500 hover:text-red-500"
+                className="flex items-center gap-2 text-gray-500 hover:text-red-500 h-8"
               >
-                {liked ? (
-                  <FaHeart className="text-red-600 text-lg" />
-                ) : (
-                  <CiHeart className="text-2xl" />
-                )}
+                <span className="w-6 h-6 flex items-center justify-center">
+                  {liked ? (
+                    <FaHeart className="text-red-600 text-xl" />
+                  ) : (
+                    <CiHeart className="text-xl" />
+                  )}
+                </span>
               </button>
               <span className="text-gray-700">138</span>
             </div>

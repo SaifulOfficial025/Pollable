@@ -9,10 +9,10 @@ function UserCard() {
           <img
             src="/dummyavatar.jpg"
             alt="profile"
-            className="w-16 h-16 rounded-full object-cover"
+            className="w-44 h-44 rounded-full object-cover"
           />
-          <div>
-            <div className="text-lg font-semibold text-gray-900">
+          <div className="mt-16">
+            <div className="text-2xl font-semibold text-gray-900">
               Jubayer Ahmad
             </div>
             <div className="text-sm text-gray-500">@ahmadjubayerr</div>
