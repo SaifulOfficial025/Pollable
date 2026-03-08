@@ -61,6 +61,7 @@ const Home = () => {
     ],
     likes: 567,
     comments: 203,
+    Polloftheday: true,
   };
 
   const pollWithMultiImageData = {
@@ -107,6 +108,7 @@ const Home = () => {
     ],
     likes: 423,
     comments: 178,
+    Polloftheday: true,
   };
 
   const pollData3 = {
@@ -354,14 +356,7 @@ const Home = () => {
         votes: 110,
         percent: 11,
       },
-      {
-        id: 7,
-        label: "Travel Adventure",
-        image:
-          "https://images.unsplash.com/photo-1500534314211-0a24cd03f2c0?w=400&h=400&fit=crop",
-        votes: 90,
-        percent: 9,
-      },
+
       {
         id: 8,
         label: "Luxury Fashion",
@@ -390,70 +385,97 @@ const Home = () => {
     likes: 412,
     comments: 133,
   };
+
+  // Create array of all polls with their component types
+  const allPolls = [
+    { data: pollData1, type: "normal", id: 1 },
+    { data: pollData2, type: "normal", id: 2 },
+    { data: pollWithImageData, type: "withImage", id: 3 },
+    { data: pollWithMultiImageData, type: "multiImage", id: 4 },
+    { data: pollData3, type: "normal", id: 5 },
+    { data: pollData4, type: "normal", id: 6 },
+    { data: pollData5, type: "normal", id: 7 },
+    { data: pollWithImageData2, type: "withImage", id: 8 },
+    { data: pollWithImageData3, type: "withImage", id: 9 },
+    { data: pollWithMultiImageData2, type: "multiImage", id: 10 },
+    { data: pollWithMultiImageData3, type: "multiImage", id: 11 },
+    { data: pollWithMultiImageData4, type: "multiImage", id: 12 },
+  ];
+
+  // Sort to show "Poll of the day" first
+  const sortedPolls = allPolls.sort((a, b) => {
+    if (a.data.Polloftheday && !b.data.Polloftheday) return -1;
+    if (!a.data.Polloftheday && b.data.Polloftheday) return 1;
+    return 0;
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen  ">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-50 bg-gray-50">
+      <div className="sticky top-0 z-50 ">
         <Header />
       </div>
 
-      <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-16 mt-6">
+      <div className=" mx-auto px-4 sm:px-6 lg:px-16 mt-6 max-w-[1536px] mx-auto">
         <div className="grid grid-cols-12 gap-6">
           {/* Sidebar - Sticky */}
-          <div className="col-span-2">
+          <div className="col-span-12 lg:col-span-2">
             <div className="sticky top-24">
               <Sidebar />
             </div>
           </div>
 
           {/* Main content - Scrollable */}
-          <div className="col-span-7 flex flex-col gap-6 pb-16">
+          <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 pb-24 md:pb-16">
             {/* Collapsed composer - triggers global modal */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center gap-4">
-                <img
-                  src="/dummyavatar.jpg"
-                  alt="avatar"
-                  className="w-10 h-10 rounded-full"
-                />
-                <button
-                  onClick={() =>
-                    window.dispatchEvent(new CustomEvent("openPostPoll"))
-                  }
-                  className="flex-1 text-left bg-gray-50 border border-gray-200 rounded-full px-4 py-3 text-gray-500"
-                >
-                  What's on your mind? Create a poll...
-                </button>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-3 flex-1">
+                  <img
+                    src="/dummyavatar.jpg"
+                    alt="avatar"
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <button
+                    onClick={() =>
+                      window.dispatchEvent(new CustomEvent("openPostPoll"))
+                    }
+                    className="flex-1 text-left bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-500"
+                  >
+                    What's on your mind? Create a poll...
+                  </button>
+                </div>
 
                 <button
                   onClick={() =>
                     window.dispatchEvent(new CustomEvent("openPostPoll"))
                   }
-                  className="ml-2 bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white p-3 rounded-lg"
+                  className="mt-3 sm:mt-0 ml-0 sm:ml-2 bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white px-4 py-2.5 sm:px-3 sm:py-3 rounded-lg flex items-center justify-center w-full sm:w-auto"
                 >
-                  <IoAddCircleOutline className="text-2xl" />
+                  <IoAddCircleOutline className="text-xl sm:text-2xl" />
                 </button>
               </div>
             </div>
 
-            <PollCard pollData={pollData1} />
-            <PollCard pollData={pollData2} />
-            <PollCardWithOneImage pollData={pollWithImageData} />
-            <PollCardwithMultiImage pollData={pollWithMultiImageData} />
-            <PollCard pollData={pollData3} />
-
-            {/* Extra examples */}
-            <PollCard pollData={pollData4} />
-            <PollCard pollData={pollData5} />
-            <PollCardWithOneImage pollData={pollWithImageData2} />
-            <PollCardWithOneImage pollData={pollWithImageData3} />
-            <PollCardwithMultiImage pollData={pollWithMultiImageData2} />
-            <PollCardwithMultiImage pollData={pollWithMultiImageData3} />
-            <PollCardwithMultiImage pollData={pollWithMultiImageData4} />
+            {/* Dynamically render sorted polls */}
+            {sortedPolls.map((poll) => {
+              if (poll.type === "normal") {
+                return <PollCard key={poll.id} pollData={poll.data} />;
+              } else if (poll.type === "withImage") {
+                return (
+                  <PollCardWithOneImage key={poll.id} pollData={poll.data} />
+                );
+              } else if (poll.type === "multiImage") {
+                return (
+                  <PollCardwithMultiImage key={poll.id} pollData={poll.data} />
+                );
+              }
+              return null;
+            })}
           </div>
 
           {/* Right bar - Sticky */}
-          <div className="col-span-3">
+          <div className="col-span-12 lg:col-span-3 pb-20 md:pb-0">
             <div className="sticky top-24">
               <RightBar />
             </div>

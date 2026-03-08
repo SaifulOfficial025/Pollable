@@ -2,14 +2,14 @@ import React from "react";
 
 function ChooseTopicComponent({ topics, selectedTopics, toggleTopic }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
       <h3 className="text-md font-semibold text-gray-800">Choose Topic(s)</h3>
       <p className="text-sm text-gray-400 mt-2">
         Add up to 3 topics to help others find your poll. We'll show it to the
         people who'll enjoy it most!
       </p>
 
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
         {topics.map((topic) => (
           <button
             key={topic.name}

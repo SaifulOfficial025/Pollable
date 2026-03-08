@@ -54,7 +54,7 @@ function Sidebar({ selectedChat, onSelectChat }) {
   ];
 
   return (
-    <div className="h-full bg-white border-r border-gray-200 flex flex-col">
+    <div className="h-[calc(100vh-120px)] bg-white border-r border-gray-200 flex flex-col rounded-xl">
       {/* Header - Search Bar or Request Header */}
       {!showMessageRequests ? (
         <div className="p-4 border-b border-gray-100">

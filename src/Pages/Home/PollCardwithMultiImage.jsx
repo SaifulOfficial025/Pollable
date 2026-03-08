@@ -72,6 +72,7 @@ function PollCardwithMultiImage({ pollData }) {
     ],
     likes = 245,
     comments = 82,
+    Polloftheday = false,
   } = pollData || {};
 
   const hasVoted = selectedOption !== null;
@@ -88,7 +89,13 @@ function PollCardwithMultiImage({ pollData }) {
 
   return (
     <>
-      <div className="max-w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <div
+        className={`max-w-full rounded-2xl border shadow-sm p-3 sm:p-5 ${
+          Polloftheday
+            ? "bg-gradient-to-br from-[#dbe8f9] to-[#e5d8fb] border-purple-200"
+            : "bg-white border-gray-100"
+        }`}
+      >
         {/* Header */}
         <div className="flex items-start justify-between">
           <Link to="/user/">
@@ -100,7 +107,16 @@ function PollCardwithMultiImage({ pollData }) {
               />
               <div>
                 <div className="text-md font-bold text-black">{user.name}</div>
-                <div className="text-xs text-gray-600">{user.timeAgo}</div>
+                <div className="text-xs text-gray-600">
+                  {Polloftheday ? (
+                    <span className="flex items-center gap-1 font-semibold text-purple-600">
+                      <span>⭐</span>
+                      Poll of the day
+                    </span>
+                  ) : (
+                    user.timeAgo
+                  )}
+                </div>
               </div>
             </div>
           </Link>
@@ -168,7 +184,9 @@ function PollCardwithMultiImage({ pollData }) {
         </div>
 
         {/* Question */}
-        <h3 className="mt-4 text-black text-lg font-semibold">{question}</h3>
+        <h3 className="mt-4 text-black text-base sm:text-lg font-semibold">
+          {question}
+        </h3>
 
         {/* Poll image options */}
         <div className={`mt-4 grid ${getGridCols()} gap-3`}>
@@ -202,7 +220,7 @@ function PollCardwithMultiImage({ pollData }) {
                     >
                       <div className="text-center">
                         <div
-                          className={`text-4xl font-bold ${
+                          className={`text-2xl sm:text-4xl font-bold ${
                             isSelected ? "text-white" : "text-white"
                           }`}
                         >
@@ -213,8 +231,8 @@ function PollCardwithMultiImage({ pollData }) {
                   )}
 
                   {/* Label at bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                    <p className="text-white text-sm font-medium truncate">
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 sm:p-3">
+                    <p className="text-white text-sm sm:text-md text-left font-medium truncate">
                       {opt.label}
                     </p>
                   </div>
@@ -239,10 +257,10 @@ function PollCardwithMultiImage({ pollData }) {
         {/* Footer actions */}
         <div className="mt-5 border-t pt-4 text-sm text-gray-500">
           <div className="grid grid-cols-4 items-center text-center">
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-1 sm:gap-2">
               <button
                 onClick={() => setLiked(!liked)}
-                className="flex items-center gap-2 text-gray-500 hover:text-red-500 h-8"
+                className="flex items-center gap-1 sm:gap-2 text-gray-500 hover:text-red-500 h-8"
               >
                 <span className="w-6 h-6 flex items-center justify-center">
                   {liked ? (
@@ -252,30 +270,37 @@ function PollCardwithMultiImage({ pollData }) {
                   )}
                 </span>
               </button>
-              <span className="text-gray-700">{likes}</span>
+              <span className="text-gray-700 text-xs sm:text-sm">{likes}</span>
             </div>
 
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-1 sm:gap-2">
               <button
                 onClick={() => setShowComments(true)}
-                className="flex items-center gap-2 text-gray-700 hover:text-gray-900 focus:outline-none"
+                className="flex items-center gap-1 sm:gap-2 text-gray-700 hover:text-gray-900 focus:outline-none"
               >
                 <FaRegComment className="text-lg text-gray-500" />
-                <span className="text-gray-700">{comments} comments</span>
+                <span className="text-gray-700 hidden sm:inline">
+                  {comments} comments
+                </span>
+                <span className="text-gray-700 sm:hidden text-xs">
+                  {comments}
+                </span>
               </button>
             </div>
 
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-1 sm:gap-2">
               <button
                 onClick={() => setShowDemographics(true)}
-                className="flex items-center gap-2 text-gray-700 hover:text-gray-900 focus:outline-none"
+                className="flex items-center gap-1 sm:gap-2 text-gray-700 hover:text-gray-900 focus:outline-none"
               >
                 <img
                   src="/demographic.svg"
                   alt="demographics"
                   className="w-5 h-5"
                 />
-                <span className="text-gray-700">Demographics</span>
+                <span className="text-gray-700 hidden sm:inline">
+                  Demographics
+                </span>
               </button>
             </div>
 

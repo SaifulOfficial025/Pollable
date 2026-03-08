@@ -7,6 +7,11 @@ html, body, #root {
   font-family: var(--font-sans);
 }
 
+/* Always reserve vertical scrollbar to avoid layout shift between pages */
+html {
+  overflow-y: scroll;
+}
+
 /* Use Playfair Display for headings */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);

@@ -111,10 +111,10 @@ function TextPostPoll({ isEmbedded = false }) {
   // If embedded, just render the content without modal
   if (isEmbedded) {
     return (
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-12 gap-4 sm:gap-6">
         {/* Left column (main) */}
-        <div className="col-span-8 space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className="col-span-12 lg:col-span-8 space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
             <h3 className="text-md font-semibold text-gray-800">
               Poll Details
             </h3>
@@ -171,8 +171,8 @@ function TextPostPoll({ isEmbedded = false }) {
         </div>
 
         {/* Right column (preview + tips + actions) */}
-        <div className="col-span-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-4">
+        <div className="col-span-12 lg:col-span-4 mt-4 lg:mt-0">
+          <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4">
             <h4 className="text-md font-semibold text-gray-800">Preview</h4>
             <div className="mt-3 border border-gray-100 rounded-xl p-4">
               <div className="flex items-center gap-3">
@@ -231,25 +231,27 @@ function TextPostPoll({ isEmbedded = false }) {
     <div>
       {/* Collapsed composer */}
       {!open && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center gap-4">
-            <img
-              src="/dummyavatar.jpg"
-              alt="avatar"
-              className="w-10 h-10 rounded-full"
-            />
-            <button
-              onClick={() => setOpen(true)}
-              className="flex-1 text-left bg-gray-50 border border-gray-200 rounded-full px-4 py-3 text-gray-500"
-            >
-              What's on your mind? Create a poll...
-            </button>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <img
+                src="/dummyavatar.jpg"
+                alt="avatar"
+                className="w-10 h-10 rounded-full"
+              />
+              <button
+                onClick={() => setOpen(true)}
+                className="flex-1 text-left bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-500"
+              >
+                What's on your mind? Create a poll...
+              </button>
+            </div>
 
             <button
               onClick={() => setOpen(true)}
-              className="ml-2 bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white p-3 rounded-lg"
+              className="mt-3 sm:mt-0 ml-0 sm:ml-2 bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white px-4 py-2.5 sm:px-3 sm:py-3 rounded-lg flex items-center justify-center w-full sm:w-auto"
             >
-              <IoAddCircleOutline className="text-2xl " />
+              <IoAddCircleOutline className="text-xl sm:text-2xl " />
             </button>
           </div>
         </div>
@@ -257,13 +259,13 @@ function TextPostPoll({ isEmbedded = false }) {
 
       {/* Modal / Expanded composer */}
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-6">
+        <div className="fixed inset-0 z-50 flex items-start justify-center px-4 sm:px-6 py-6">
           <div
             className="absolute inset-0 bg-black/30"
             onClick={() => setOpen(false)}
           />
 
-          <div className="relative z-10 w-full max-w-6xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 max-h-[80vh] overflow-y-auto">
+          <div className="relative z-10 w-full max-w-6xl bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 max-h-[80vh] overflow-y-auto">
             {/* Close (X) button */}
             <button
               onClick={() => setOpen(false)}
@@ -273,10 +275,10 @@ function TextPostPoll({ isEmbedded = false }) {
               &times;
             </button>
 
-            <div className="grid grid-cols-12 gap-6">
+            <div className="grid grid-cols-12 gap-4 sm:gap-6">
               {/* Left column (main) */}
-              <div className="col-span-8 space-y-4">
-                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="col-span-12 lg:col-span-8 space-y-4">
+                <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
                   <h3 className="text-md font-semibold text-gray-800">
                     Poll Details
                   </h3>
@@ -335,8 +337,8 @@ function TextPostPoll({ isEmbedded = false }) {
               </div>
 
               {/* Right column (preview + tips + actions) */}
-              <div className="col-span-4">
-                <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="col-span-12 lg:col-span-4 mt-4 lg:mt-0">
+                <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4">
                   <h4 className="text-md font-semibold text-gray-800">
                     Preview
                   </h4>

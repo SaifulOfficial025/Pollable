@@ -2,12 +2,12 @@ import React from "react";
 
 function PollSettingsComponent({ allowComments, setAllowComments }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
       <h3 className="text-md font-semibold text-gray-800">Poll Settings</h3>
       <div className="mt-4 space-y-3">
         <div>
           <div className="text-md font-medium text-gray-900">Duration</div>
-          <select className="mt-2 w-48 border border-gray-100 rounded-md px-3 py-2 text-md bg-white">
+          <select className="mt-2 w-full sm:w-48 border border-gray-100 rounded-md px-3 py-2 text-md bg-white">
             <option>No end date</option>
             <option>12 Hours</option>
             <option>1 day</option>
@@ -15,7 +15,7 @@ function PollSettingsComponent({ allowComments, setAllowComments }) {
           </select>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="text-md font-medium">Allow Comments</div>
             <div className="text-xs text-gray-400">

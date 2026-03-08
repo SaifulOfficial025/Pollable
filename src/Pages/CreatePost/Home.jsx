@@ -20,13 +20,13 @@ function Home() {
     <>
       {/* Modal / Expanded composer */}
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-6">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 pb-10 px-4 sm:px-6 overflow-y-auto">
           <div
             className="absolute inset-0 bg-black/30"
             onClick={() => setOpen(false)}
           />
 
-          <div className="relative z-10 w-full max-w-6xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 max-h-[80vh] overflow-y-auto">
+          <div className="relative z-10 w-full max-w-6xl bg-white rounded-2xl shadow-xl border border-gray-100 p-4 sm:p-6 max-h-[80vh] overflow-y-auto">
             {/* Close (X) button */}
             <button
               onClick={() => setOpen(false)}
@@ -41,7 +41,7 @@ function Home() {
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Choose your poll format
               </h3>
-              <div className="flex items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
                 <label className="inline-flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"

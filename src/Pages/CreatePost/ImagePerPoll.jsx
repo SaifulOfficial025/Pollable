@@ -86,14 +86,18 @@ function ImagePerPoll({ isEmbedded = false }) {
   }
 
   function updateOptionText(i, value) {
-    setOptions((s) => s.map((o, idx) => (idx === i ? { ...o, text: value } : o)));
+    setOptions((s) =>
+      s.map((o, idx) => (idx === i ? { ...o, text: value } : o)),
+    );
   }
 
   function handleOptionImageUpload(i, e) {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
-      setOptions((s) => s.map((o, idx) => (idx === i ? { ...o, image: url } : o)));
+      setOptions((s) =>
+        s.map((o, idx) => (idx === i ? { ...o, image: url } : o)),
+      );
     }
   }
 
@@ -110,10 +114,10 @@ function ImagePerPoll({ isEmbedded = false }) {
   }
 
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-12 gap-4 sm:gap-6">
       {/* Left column (main) */}
-      <div className="col-span-8 space-y-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <div className="col-span-12 lg:col-span-8 space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
           <h3 className="text-md font-semibold text-gray-800">Poll Details</h3>
 
           <div className="mt-4">
@@ -136,7 +140,10 @@ function ImagePerPoll({ isEmbedded = false }) {
             <label className="text-md text-gray-600">Answer Options</label>
             <div className="space-y-4 mt-3">
               {options.map((opt, i) => (
-                <div key={i} className="flex items-center gap-3">
+                <div
+                  key={i}
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
+                >
                   {/* Image upload box */}
                   <div
                     onClick={() => fileInputRefs.current[i]?.click()}
@@ -151,9 +158,7 @@ function ImagePerPoll({ isEmbedded = false }) {
                     ) : (
                       <>
                         <IoImage className="text-2xl text-gray-400 mb-1" />
-                        <span className="text-xs text-gray-500">
-                          {i + 1}
-                        </span>
+                        <span className="text-xs text-gray-500">{i + 1}</span>
                       </>
                     )}
                   </div>
@@ -198,8 +203,8 @@ function ImagePerPoll({ isEmbedded = false }) {
       </div>
 
       {/* Right column (preview + tips + actions) */}
-      <div className="col-span-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
+      <div className="col-span-12 lg:col-span-4 mt-4 lg:mt-0">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4">
           <h4 className="text-md font-semibold text-gray-800">Preview</h4>
           <div className="mt-3 border border-gray-100 rounded-xl p-4">
             <div className="flex items-center gap-3">

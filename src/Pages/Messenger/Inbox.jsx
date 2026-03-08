@@ -37,35 +37,175 @@ function Inbox({ selectedChat }) {
           id: 1,
           sender: "Sarah Johnson",
           text: "Hey! I saw your poll about remote work.",
-          time: "2:34 PM",
+          time: "9:15 AM",
           isMine: false,
         },
         {
           id: 2,
           sender: "You",
           text: "Yes! Getting great engagement so far.",
-          time: "2:35 PM",
+          time: "9:16 AM",
           isMine: true,
         },
         {
           id: 3,
           sender: "Sarah Johnson",
           text: "The demographic breakdown is fascinating. 68% prefer remote!",
-          time: "2:36 PM",
+          time: "9:18 AM",
           isMine: false,
         },
         {
           id: 4,
           sender: "You",
           text: "I know! Much higher than I expected. The age distribution shows interesting trends too.",
-          time: "2:37 PM",
+          time: "9:20 AM",
           isMine: true,
         },
         {
           id: 5,
           sender: "Sarah Johnson",
-          text: "Thanks for sharing that poll!",
-          time: "2:38 PM",
+          text: "Have you shared the results with your team yet?",
+          time: "9:22 AM",
+          isMine: false,
+        },
+        {
+          id: 6,
+          sender: "You",
+          text: "Not yet, planning to present them in tomorrow's meeting.",
+          time: "9:25 AM",
+          isMine: true,
+        },
+        {
+          id: 7,
+          sender: "Sarah Johnson",
+          text: "That's exciting! I'd love to hear how it goes.",
+          time: "9:27 AM",
+          isMine: false,
+        },
+        {
+          id: 8,
+          sender: "You",
+          text: "Will do! The hybrid option got 24% which is also interesting.",
+          time: "9:30 AM",
+          isMine: true,
+        },
+        {
+          id: 9,
+          sender: "Sarah Johnson",
+          text: "Yes, I noticed that. Some people still value in-person collaboration.",
+          time: "9:32 AM",
+          isMine: false,
+        },
+        {
+          id: 10,
+          sender: "You",
+          text: "Absolutely. The full-time office option got the least votes at 8%.",
+          time: "9:35 AM",
+          isMine: true,
+        },
+        {
+          id: 11,
+          sender: "Sarah Johnson",
+          text: "Makes sense given how everyone's adapted to remote work.",
+          time: "9:38 AM",
+          isMine: false,
+        },
+        {
+          id: 12,
+          sender: "You",
+          text: "Exactly! Technology has come a long way.",
+          time: "9:40 AM",
+          isMine: true,
+        },
+        {
+          id: 13,
+          sender: "Sarah Johnson",
+          text: "Did you get any comments from the voters?",
+          time: "9:42 AM",
+          isMine: false,
+        },
+        {
+          id: 14,
+          sender: "You",
+          text: "Yes, over 150 comments! People are really passionate about this topic.",
+          time: "9:45 AM",
+          isMine: true,
+        },
+        {
+          id: 15,
+          sender: "Sarah Johnson",
+          text: "Wow! That's amazing engagement. What are people saying?",
+          time: "9:47 AM",
+          isMine: false,
+        },
+        {
+          id: 16,
+          sender: "You",
+          text: "Mostly discussing work-life balance and productivity concerns.",
+          time: "9:50 AM",
+          isMine: true,
+        },
+        {
+          id: 17,
+          sender: "Sarah Johnson",
+          text: "Those are definitely the hot topics right now.",
+          time: "9:52 AM",
+          isMine: false,
+        },
+        {
+          id: 18,
+          sender: "You",
+          text: "I'm thinking of creating a follow-up poll about productivity tools.",
+          time: "9:55 AM",
+          isMine: true,
+        },
+        {
+          id: 19,
+          sender: "Sarah Johnson",
+          text: "Great idea! What tools are you thinking about?",
+          time: "10:00 AM",
+          isMine: false,
+        },
+        {
+          id: 20,
+          sender: "You",
+          text: "Project management, communication apps, time tracking - that sort of thing.",
+          time: "10:02 AM",
+          isMine: true,
+        },
+        {
+          id: 21,
+          sender: "Sarah Johnson",
+          text: "Nice! I'd definitely vote on that poll.",
+          time: "10:05 AM",
+          isMine: false,
+        },
+        {
+          id: 22,
+          sender: "You",
+          text: "I'll tag you when it's live!",
+          time: "10:07 AM",
+          isMine: true,
+        },
+        {
+          id: 23,
+          sender: "Sarah Johnson",
+          text: "Perfect! Thanks for the interesting conversation.",
+          time: "10:10 AM",
+          isMine: false,
+        },
+        {
+          id: 24,
+          sender: "You",
+          text: "Anytime! Always great chatting about these topics.",
+          time: "10:12 AM",
+          isMine: true,
+        },
+        {
+          id: 25,
+          sender: "Sarah Johnson",
+          text: "Same here! Talk soon.",
+          time: "10:15 AM",
           isMine: false,
         },
       ];
@@ -117,9 +257,9 @@ function Inbox({ selectedChat }) {
   }
 
   return (
-    <div className="h-full bg-white flex flex-col">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div className="h-[calc(100vh-120px)] bg-white flex flex-col rounded-xl border border-gray-200">
+      {/* Header - Fixed */}
+      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="relative">
             <img
@@ -176,7 +316,7 @@ function Inbox({ selectedChat }) {
         </div>
       </div>
 
-      {/* Messages */}
+      {/* Messages - Scrollable */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
         {dummyMessages.map((msg) => (
           <div key={msg.id}>
@@ -230,9 +370,9 @@ function Inbox({ selectedChat }) {
         </div>
       )}
 
-      {/* Input or Action Buttons for Message Requests */}
+      {/* Input or Action Buttons for Message Requests - Fixed at bottom */}
       {selectedChat?.isRequest ? (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <p className="text-xs text-gray-600 mb-4 leading-relaxed">
             If you accept, {selectedChat.name} will be able to call you and may
             see information like your active status and when you've read
@@ -257,7 +397,7 @@ function Inbox({ selectedChat }) {
           </div>
         </div>
       ) : (
-        <div className="px-6 py-4 border-t border-gray-200">
+        <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               type="button"

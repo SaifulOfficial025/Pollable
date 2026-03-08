@@ -110,10 +110,10 @@ function SingleImagePostPoll({ isEmbedded = false }) {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-12 gap-4 sm:gap-6">
       {/* Left column (main) */}
-      <div className="col-span-8 space-y-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <div className="col-span-12 lg:col-span-8 space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
           <h3 className="text-md font-semibold text-gray-800">Poll Details</h3>
 
           {/* Upload Photo Section */}
@@ -202,8 +202,8 @@ function SingleImagePostPoll({ isEmbedded = false }) {
       </div>
 
       {/* Right column (preview + tips + actions) */}
-      <div className="col-span-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
+      <div className="col-span-12 lg:col-span-4 mt-4 lg:mt-0">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4">
           <h4 className="text-md font-semibold text-gray-800">Preview</h4>
           <div className="mt-3 border border-gray-100 rounded-xl p-4">
             <div className="flex items-center gap-3">

@@ -38,11 +38,20 @@ function Header() {
 
   return (
     <header className="w-full bg-white border-b border-gray-100 shadow-sm">
-      <div className="max-w-9xl mx-auto px-16 py-3 flex items-center gap-6">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-16 py-3 flex items-center gap-6">
         {/* Logo */}
         <Link to="/">
           <div className="flex-shrink-0">
-            <img src="/Logo.png" alt="Logo" className="h-8 w-auto" />
+            <img
+              src="/logoicon.png"
+              alt="Logo icon"
+              className="h-8 w-auto block md:hidden"
+            />
+            <img
+              src="/Logo.png"
+              alt="Logo"
+              className="h-8 w-auto hidden md:block"
+            />
           </div>
         </Link>
 
