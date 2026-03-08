@@ -56,7 +56,7 @@ function Header() {
               <input
                 type="text"
                 placeholder="Search polls, topics, or people..."
-                className="w-full rounded-full bg-gray-50 border border-transparent focus:border-gray-200 focus:ring-0 pl-11 pr-4 py-2 text-sm text-gray-600"
+                className="w-full rounded-full bg-gray-50 border border-gray-300 focus:border-gray-200 focus:ring-0 pl-11 pr-4 py-2 text-sm text-gray-600"
               />
             </div>
           </div>

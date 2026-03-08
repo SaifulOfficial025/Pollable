@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CiHeart } from "react-icons/ci";
 import { FaHeart, FaRegComment } from "react-icons/fa";
-import { BsShare } from "react-icons/bs";
-import { BsThreeDotsVertical } from "react-icons/bs";
+import { BsShare, BsThreeDotsVertical } from "react-icons/bs";
 import { IoBookmarkOutline } from "react-icons/io5";
 import { FiFlag } from "react-icons/fi";
 import CommentModal from "./CommentModal";
 import PollDemographicModal from "./PollDemographicModal";
 import { Link } from "react-router-dom";
 
-function PollCard({ pollData }) {
+function PollCardwithMultiImage({ pollData }) {
   const [liked, setLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showDemographics, setShowDemographics] = useState(false);
@@ -37,18 +36,55 @@ function PollCard({ pollData }) {
   const {
     user = {
       name: "Anonymous User",
-      avatar: "https://randomuser.me/api/portraits/men/1.jpg",
+      avatar: "https://randomuser.me/api/portraits/women/2.jpg",
       timeAgo: "1 hour ago",
     },
     question = "What's your question?",
     options = [
-      { label: "Fully Remote", votes: 684, percent: 68 },
-      { label: "Hybrid (2-3 days office)", votes: 241, percent: 24 },
-      { label: "Full-time Office", votes: 80, percent: 8 },
+      {
+        id: 1,
+        label: "The Nomad Minimalist",
+        image: "https://randomuser.me/api/portraits/men/1.jpg",
+        votes: 300,
+        percent: 30,
+      },
+      {
+        id: 2,
+        label: "The Playful Romantic",
+        image: "https://randomuser.me/api/portraits/men/2.jpg",
+        votes: 300,
+        percent: 30,
+      },
+      {
+        id: 3,
+        label: "The Real Gentleman",
+        image: "https://randomuser.me/api/portraits/men/3.jpg",
+        votes: 300,
+        percent: 30,
+      },
+      {
+        id: 4,
+        label: "The Bold Adventurer",
+        image: "https://randomuser.me/api/portraits/men/4.jpg",
+        votes: 100,
+        percent: 10,
+      },
     ],
     likes = 245,
     comments = 82,
   } = pollData || {};
+
+  const hasVoted = selectedOption !== null;
+
+  // Dynamic grid layout based on number of options
+  const getGridCols = () => {
+    const count = options.length;
+    if (count <= 2) return "grid-cols-2";
+    if (count <= 4) return "grid-cols-2 md:grid-cols-4";
+    if (count <= 6) return "grid-cols-2 md:grid-cols-3";
+    if (count <= 9) return "grid-cols-3";
+    return "grid-cols-4";
+  };
 
   return (
     <>
@@ -132,69 +168,73 @@ function PollCard({ pollData }) {
         </div>
 
         {/* Question */}
-        <h3 className="mt-4 text-black text-lg font-semibold">
-          What is your preferred work model post-pandemic?
-        </h3>
+        <h3 className="mt-4 text-black text-lg font-semibold">{question}</h3>
 
-        {/* Poll options */}
-        <div className="mt-4 space-y-3">
-          {options.map((opt, idx) => {
-            const isSelected = selectedOption === idx;
-            const hasVoted = selectedOption !== null;
+        {/* Poll image options */}
+        <div className={`mt-4 grid ${getGridCols()} gap-3`}>
+          {options.map((opt) => {
+            const isSelected = selectedOption === opt.id;
             return (
               <button
-                key={idx}
+                key={opt.id}
                 type="button"
                 onClick={() =>
-                  setSelectedOption((prev) => (prev === idx ? null : idx))
+                  setSelectedOption((prev) => (prev === opt.id ? null : opt.id))
                 }
-                className="w-full text-left focus:outline-none"
+                className="relative group focus:outline-none"
               >
-                <div className="relative flex items-center gap-3 transition-transform duration-150 ease-out hover:-translate-y-0.5">
-                  <div className="flex-1 relative">
+                <div className="relative aspect-square rounded-xl overflow-hidden transition-transform duration-150 ease-out hover:scale-[1.02]">
+                  {/* Image */}
+                  <img
+                    src={opt.image}
+                    alt={opt.label}
+                    className="w-full h-full object-cover"
+                  />
+
+                  {/* Overlay when voted and has percentage */}
+                  {hasVoted && (
                     <div
-                      className={`w-full rounded-lg h-14 flex items-center relative overflow-hidden transition-shadow duration-150 bg-blue-50 ${
-                        !isSelected ? "hover:shadow-md" : ""
+                      className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+                        isSelected
+                          ? "bg-gradient-to-br from-[#4a90e2]/80 to-[#7c3bed]/80"
+                          : "bg-black/20"
                       }`}
                     >
-                      <div
-                        className={`h-14 rounded-lg absolute top-0 left-0 transition-[width] duration-300 ${
-                          isSelected
-                            ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed]"
-                            : "bg-blue-200"
-                        }`}
-                        style={{
-                          width: hasVoted ? `${opt.percent}%` : "0%",
-                        }}
-                      />
-                      <div className="absolute left-6 z-10">
-                        <span
-                          className={`text-md font-semibold ${
-                            isSelected ? "text-white" : "text-gray-900"
+                      <div className="text-center">
+                        <div
+                          className={`text-4xl font-bold ${
+                            isSelected ? "text-white" : "text-white"
                           }`}
                         >
-                          {opt.label}
-                        </span>
-                      </div>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
-                        {hasVoted && (
-                          <>
-                            <div className="text-sm text-gray-600 px-2 rounded">
-                              {opt.votes} votes
-                            </div>
-                            <div className="text-lg font-bold text-[#4c8df6] px-2 rounded">
-                              {opt.percent}%
-                            </div>
-                          </>
-                        )}
+                          {opt.percent}%
+                        </div>
                       </div>
                     </div>
+                  )}
+
+                  {/* Label at bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                    <p className="text-white text-sm font-medium truncate">
+                      {opt.label}
+                    </p>
                   </div>
                 </div>
               </button>
             );
           })}
         </div>
+
+        {/* Total votes display after voting */}
+        {hasVoted && (
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600">
+              Total votes:{" "}
+              {options
+                .reduce((sum, opt) => sum + opt.votes, 0)
+                .toLocaleString()}
+            </p>
+          </div>
+        )}
 
         {/* Footer actions */}
         <div className="mt-5 border-t pt-4 text-sm text-gray-500">
@@ -261,4 +301,4 @@ function PollCard({ pollData }) {
   );
 }
 
-export default PollCard;
+export default PollCardwithMultiImage;

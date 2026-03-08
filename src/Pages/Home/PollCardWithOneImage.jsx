@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CiHeart } from "react-icons/ci";
 import { FaHeart, FaRegComment } from "react-icons/fa";
-import { BsShare } from "react-icons/bs";
-import { BsThreeDotsVertical } from "react-icons/bs";
+import { BsShare, BsThreeDotsVertical } from "react-icons/bs";
 import { IoBookmarkOutline } from "react-icons/io5";
 import { FiFlag } from "react-icons/fi";
 import CommentModal from "./CommentModal";
 import PollDemographicModal from "./PollDemographicModal";
 import { Link } from "react-router-dom";
 
-function PollCard({ pollData }) {
+function PollCardWithOneImage({ pollData }) {
   const [liked, setLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showDemographics, setShowDemographics] = useState(false);
@@ -37,14 +36,16 @@ function PollCard({ pollData }) {
   const {
     user = {
       name: "Anonymous User",
-      avatar: "https://randomuser.me/api/portraits/men/1.jpg",
+      avatar: "https://randomuser.me/api/portraits/women/1.jpg",
       timeAgo: "1 hour ago",
     },
     question = "What's your question?",
+    bannerImage = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800",
     options = [
-      { label: "Fully Remote", votes: 684, percent: 68 },
-      { label: "Hybrid (2-3 days office)", votes: 241, percent: 24 },
-      { label: "Full-time Office", votes: 80, percent: 8 },
+      { label: "Twitter/X", votes: 420, percent: 42 },
+      { label: "Reddit", votes: 260, percent: 26 },
+      { label: "Instagram", votes: 190, percent: 19 },
+      { label: "Traditional news sites", votes: 130, percent: 13 },
     ],
     likes = 245,
     comments = 82,
@@ -58,13 +59,13 @@ function PollCard({ pollData }) {
           <Link to="/user/">
             <div className="flex items-center gap-3">
               <img
-                src={user.avatar}
+                src="/dummyavatar.jpg"
                 alt="avatar"
                 className="w-10 h-10 rounded-full object-cover"
               />
               <div>
-                <div className="text-md font-bold text-black">{user.name}</div>
-                <div className="text-xs text-gray-600">{user.timeAgo}</div>
+                <div className="text-md font-bold text-black">Michael Chen</div>
+                <div className="text-xs text-gray-600">4 hours ago</div>
               </div>
             </div>
           </Link>
@@ -132,9 +133,16 @@ function PollCard({ pollData }) {
         </div>
 
         {/* Question */}
-        <h3 className="mt-4 text-black text-lg font-semibold">
-          What is your preferred work model post-pandemic?
-        </h3>
+        <h3 className="mt-4 text-black text-lg font-semibold">{question}</h3>
+
+        {/* Banner Image */}
+        <div className="mt-4">
+          <img
+            src={bannerImage}
+            alt="poll banner"
+            className="w-full h-64 object-cover rounded-2xl"
+          />
+        </div>
 
         {/* Poll options */}
         <div className="mt-4 space-y-3">
@@ -261,4 +269,4 @@ function PollCard({ pollData }) {
   );
 }
 
-export default PollCard;
+export default PollCardWithOneImage;

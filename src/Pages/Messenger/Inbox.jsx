@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { IoImage } from "react-icons/io5";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { Link } from "react-router-dom";
+import Button from "../../Shared/Button";
 
 function Inbox({ selectedChat }) {
   const [message, setMessage] = useState("");
@@ -21,43 +22,53 @@ function Inbox({ selectedChat }) {
   }, []);
 
   // Dummy chat messages
-  const dummyMessages = [
-    {
-      id: 1,
-      sender: "Sarah Johnson",
-      text: "Hey! I saw your poll about remote work.",
-      time: "2:34 PM",
-      isMine: false,
-    },
-    {
-      id: 2,
-      sender: "You",
-      text: "Yes! Getting great engagement so far.",
-      time: "2:35 PM",
-      isMine: true,
-    },
-    {
-      id: 3,
-      sender: "Sarah Johnson",
-      text: "The demographic breakdown is fascinating. 68% prefer remote!",
-      time: "2:36 PM",
-      isMine: false,
-    },
-    {
-      id: 4,
-      sender: "You",
-      text: "I know! Much higher than I expected. The age distribution shows interesting trends too.",
-      time: "2:37 PM",
-      isMine: true,
-    },
-    {
-      id: 5,
-      sender: "Sarah Johnson",
-      text: "Thanks for sharing that poll!",
-      time: "2:38 PM",
-      isMine: false,
-    },
-  ];
+  const dummyMessages = selectedChat?.isRequest
+    ? [
+        {
+          id: 1,
+          sender: selectedChat.name,
+          text: "Hi! I'd like to connect with you.",
+          time: "Yesterday",
+          isMine: false,
+        },
+      ]
+    : [
+        {
+          id: 1,
+          sender: "Sarah Johnson",
+          text: "Hey! I saw your poll about remote work.",
+          time: "2:34 PM",
+          isMine: false,
+        },
+        {
+          id: 2,
+          sender: "You",
+          text: "Yes! Getting great engagement so far.",
+          time: "2:35 PM",
+          isMine: true,
+        },
+        {
+          id: 3,
+          sender: "Sarah Johnson",
+          text: "The demographic breakdown is fascinating. 68% prefer remote!",
+          time: "2:36 PM",
+          isMine: false,
+        },
+        {
+          id: 4,
+          sender: "You",
+          text: "I know! Much higher than I expected. The age distribution shows interesting trends too.",
+          time: "2:37 PM",
+          isMine: true,
+        },
+        {
+          id: 5,
+          sender: "Sarah Johnson",
+          text: "Thanks for sharing that poll!",
+          time: "2:38 PM",
+          isMine: false,
+        },
+      ];
 
   const handleSend = () => {
     if (message.trim()) {
@@ -125,7 +136,11 @@ function Inbox({ selectedChat }) {
               {selectedChat.name}
             </h3>
             <p className="text-xs text-green-600">
-              {selectedChat.active ? "Active now" : "Offline"}
+              {selectedChat.isRequest
+                ? selectedChat.handle || ""
+                : selectedChat.active
+                  ? "Active now"
+                  : "Offline"}
             </p>
           </div>
         </div>
@@ -215,43 +230,70 @@ function Inbox({ selectedChat }) {
         </div>
       )}
 
-      {/* Input */}
-      <div className="px-6 py-4 border-t border-gray-200">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleImageClick}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <IoImage className="text-gray-600 text-3xl" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            className="hidden"
-          />
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSend()}
-              className="w-full pl-4 pr-14 py-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+      {/* Input or Action Buttons for Message Requests */}
+      {selectedChat?.isRequest ? (
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <p className="text-xs text-gray-600 mb-4 leading-relaxed">
+            If you accept, {selectedChat.name} will be able to call you and may
+            see information like your active status and when you've read
+            messages.
+          </p>
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={handleSend}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 hover:scale-105 transition-transform"
+              className="flex-1 py-2.5 px-4 text-sm font-semibold text-red-600 hover:text-red-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <img src="/sendbutton.svg" alt="Send" className="w-10 h-10" />
+              Block
             </button>
+            <button
+              type="button"
+              className="flex-1 py-2.5 px-4 text-sm font-semibold text-red-600 hover:text-red-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              Delete
+            </button>
+            <div className="flex-1">
+              <Button label="Accept" fullWidth size="md" />
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="px-6 py-4 border-t border-gray-200">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleImageClick}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <IoImage className="text-gray-600 text-3xl" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+              className="hidden"
+            />
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                className="w-full pl-4 pr-14 py-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                type="button"
+                onClick={handleSend}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 hover:scale-105 transition-transform"
+              >
+                <img src="/sendbutton.svg" alt="Send" className="w-10 h-10" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -66,7 +66,7 @@ function RightBar() {
       </div>
 
       {/* Suggested Polls */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      {/* <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
         <div className="flex items-center gap-2">
           <FaUsers className="text-cyan-600 text-lg" />
           <h4 className="text-md font-semibold text-gray-800">
@@ -96,7 +96,7 @@ function RightBar() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </aside>
   );
 }
