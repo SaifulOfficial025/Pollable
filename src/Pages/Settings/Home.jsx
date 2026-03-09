@@ -8,7 +8,7 @@ import Documentations from "./Documentations";
 import Profile from "./Profile";
 
 const SettingsHome = () => {
-  const [selected, setSelected] = useState("blocked");
+  const [selected, setSelected] = useState("profile");
 
   function handleSelect(key) {
     if (key === "back") {
