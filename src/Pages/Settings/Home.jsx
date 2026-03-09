@@ -20,15 +20,17 @@ const SettingsHome = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <div className="sticky top-0 z-50">
+        <Header />
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-3">
+          <div className="col-span-12 lg:col-span-3">
             <Sidebar selected={selected} onSelect={handleSelect} />
           </div>
 
-          <div className="col-span-9">
+          <div className="col-span-12 lg:col-span-9 mt-4 lg:mt-0">
             {selected === "profile" && <Profile />}
             {selected === "account" && <Accounts />}
             {selected === "password" && <Password />}

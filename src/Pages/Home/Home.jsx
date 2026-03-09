@@ -428,7 +428,7 @@ const Home = () => {
           {/* Main content - Scrollable */}
           <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 pb-24 md:pb-16">
             {/* Collapsed composer - triggers global modal */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4 cursor-pointer hover:bg-gray-50 transition-colors sm:mt-0 md:mt-0 lg:mt-0 xl:mt-0 -mt-10">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                 <div className="flex items-center gap-3 flex-1">
                   <img
@@ -450,9 +450,9 @@ const Home = () => {
                   onClick={() =>
                     window.dispatchEvent(new CustomEvent("openPostPoll"))
                   }
-                  className="mt-3 sm:mt-0 ml-0 sm:ml-2 bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white px-4 py-2.5 sm:px-3 sm:py-3 rounded-lg flex items-center justify-center w-full sm:w-auto"
+                  className="hidden sm:flex sm:mt-0 sm:ml-2 bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white px-3 py-3 rounded-lg items-center justify-center w-auto"
                 >
-                  <IoAddCircleOutline className="text-xl sm:text-2xl" />
+                  <IoAddCircleOutline className="text-2xl" />
                 </button>
               </div>
             </div>

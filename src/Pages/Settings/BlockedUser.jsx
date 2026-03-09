@@ -57,7 +57,7 @@ function BlockedUser() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
       <h3 className="text-sm font-semibold text-gray-800 mb-2">
         Blocked Users
       </h3>
@@ -68,7 +68,10 @@ function BlockedUser() {
 
       <div className="space-y-4">
         {users.map((u) => (
-          <div key={u.id} className="flex items-center justify-between">
+          <div
+            key={u.id}
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+          >
             <div className="flex items-center gap-4">
               <img
                 src={u.avatar}
@@ -83,10 +86,10 @@ function BlockedUser() {
               </div>
             </div>
 
-            <div>
+            <div className="w-full sm:w-auto">
               <button
                 onClick={() => handleUnblock(u.id)}
-                className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-full text-sm hover:bg-indigo-100 focus:outline-none"
+                className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-full text-sm hover:bg-indigo-100 focus:outline-none w-full sm:w-auto text-center"
               >
                 Unblock
               </button>

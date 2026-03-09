@@ -20,7 +20,7 @@ function Password() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 max-w-5xl">
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 max-w-5xl">
       <h3 className="text-sm font-semibold text-gray-800 mb-4">
         Password &amp; Security
       </h3>

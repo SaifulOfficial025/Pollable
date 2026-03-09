@@ -23,13 +23,13 @@ function Profile() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-8">
+    <div className="bg-white rounded-lg shadow-sm p-4 sm:p-8">
       {/* Avatar and change photo */}
-      <div className="flex flex-col items-center mb-8">
+      <div className="flex flex-col items-center mb-6 sm:mb-8">
         <img
           src="/dummyavatar.jpg"
           alt="Profile"
-          className="w-44 h-44 rounded-full object-cover mb-3"
+          className="w-28 h-28 sm:w-44 sm:h-44 rounded-full object-cover mb-3"
         />
         <button
           type="button"

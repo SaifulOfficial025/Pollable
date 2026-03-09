@@ -58,11 +58,11 @@ function NotificationModal({ initialOpen = true, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6 py-6">
       <div className="absolute inset-0 bg-black/30" onClick={handleClose} />
 
       <div className="relative z-10 w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-gray-100">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
           <div className="text-sm font-medium text-gray-800">Notifications</div>
           <button
             onClick={handleClose}
@@ -73,11 +73,11 @@ function NotificationModal({ initialOpen = true, onClose }) {
           </button>
         </div>
 
-        <div className="p-5 max-h-[70vh] overflow-y-auto space-y-3">
+        <div className="p-4 sm:p-5 max-h-[70vh] overflow-y-auto space-y-3">
           {notifications.map((n) => (
             <div
               key={n.id}
-              className="rounded-lg border border-gray-100 p-4 bg-white"
+              className="rounded-lg border border-gray-100 p-3 sm:p-4 bg-white"
             >
               <div className="flex items-start gap-4">
                 <img
@@ -86,11 +86,13 @@ function NotificationModal({ initialOpen = true, onClose }) {
                   className="w-10 h-10 rounded-full object-cover"
                 />
                 <div className="flex-1">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
                     <div className="text-sm font-semibold text-gray-800">
                       {n.title}
                     </div>
-                    <div className="text-xs text-gray-400">{n.time}</div>
+                    <div className="text-xs text-gray-400 mt-1 sm:mt-0">
+                      {n.time}
+                    </div>
                   </div>
 
                   {n.body && (

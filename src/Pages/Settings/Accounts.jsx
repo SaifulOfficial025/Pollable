@@ -7,20 +7,20 @@ function Accounts() {
   return (
     <div className="space-y-6">
       {/* Subscription */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
         <h3 className="text-sm font-semibold text-gray-800 mb-4">
           Subscription
         </h3>
 
-        <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
-          <div>
+        <div className="bg-gray-50 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="w-full sm:w-auto">
             <div className="text-sm font-semibold text-gray-900">Free Plan</div>
             <div className="text-xs text-gray-500">
               Basic features and analytics
             </div>
           </div>
 
-          <div>
+          <div className="w-full sm:w-auto sm:text-right">
             <Button label="Upgrade to Premium" />
           </div>
         </div>
@@ -49,9 +49,9 @@ function Accounts() {
       </div> */}
 
       {/* Delete Account */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="w-full sm:w-auto">
             <div className="text-sm font-semibold text-gray-800">
               Delete Account
             </div>
@@ -60,7 +60,7 @@ function Accounts() {
             </div>
           </div>
 
-          <button className="px-4 py-2 rounded-md border border-red-200 text-sm text-red-500 hover:bg-red-50">
+          <button className="px-4 py-2 rounded-md border border-red-200 text-sm text-red-500 hover:bg-red-50 w-full sm:w-auto text-center">
             Delete
           </button>
         </div>
