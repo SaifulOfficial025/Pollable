@@ -6,7 +6,7 @@ import Button from "../../Shared/Button";
 
 function RightBar() {
   return (
-    <aside className="w-full space-y-4">
+    <aside className="hidden md:block w-full space-y-4">
       {/* Poll of the Day */}
       <div className="bg-gradient-to-br from-[#dbe8f9] to-[#e5d8fb] rounded-xl border border-gray-100 shadow-sm p-4">
         <div className="flex items-center gap-2">

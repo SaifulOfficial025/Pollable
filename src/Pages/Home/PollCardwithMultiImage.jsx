@@ -3,7 +3,8 @@ import { CiHeart } from "react-icons/ci";
 import { FaHeart, FaRegComment } from "react-icons/fa";
 import { BsShare, BsThreeDotsVertical } from "react-icons/bs";
 import { IoBookmarkOutline } from "react-icons/io5";
-import { FiFlag } from "react-icons/fi";
+import { FiFlag, FiEdit } from "react-icons/fi";
+import { MdDelete } from "react-icons/md";
 import CommentModal from "./CommentModal";
 import PollDemographicModal from "./PollDemographicModal";
 import { Link } from "react-router-dom";
@@ -15,6 +16,8 @@ function PollCardwithMultiImage({ pollData }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [audience, setAudience] = useState("everyone");
+  const [showAudienceMenu, setShowAudienceMenu] = useState(false);
 
   const menuRef = useRef(null);
 
@@ -73,9 +76,23 @@ function PollCardwithMultiImage({ pollData }) {
     likes = 245,
     comments = 82,
     Polloftheday = false,
+    isOwner = true,
   } = pollData || {};
 
   const hasVoted = selectedOption !== null;
+
+  const handleEdit = () => {
+    // Dispatch custom event to open the CreatePost modal with poll data
+    const event = new CustomEvent("openPostPoll", { detail: pollData });
+    window.dispatchEvent(event);
+    setShowMenu(false);
+  };
+
+  const handleDelete = () => {
+    // Add delete functionality here
+    console.log("Delete poll", pollData);
+    setShowMenu(false);
+  };
 
   // Dynamic grid layout based on number of options
   const getGridCols = () => {
@@ -132,52 +149,77 @@ function PollCardwithMultiImage({ pollData }) {
 
             {showMenu && (
               <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg py-2 z-20 text-sm">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAnonymous((prev) => !prev);
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-2.5 gap-3 text-sm font-medium rounded-lg bg-white hover:bg-gray-50 text-gray-800 transition-colors duration-150 cursor-pointer"
-                >
-                  <img
-                    src="/anonymous.svg"
-                    alt="anonymous vote"
-                    className="w-5 h-5"
-                  />
-                  <span className="font-semibold text-md flex-1 text-left">
-                    Vote Anonymously?
-                  </span>
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsAnonymous((prev) => !prev);
-                    }}
-                    className={`ml-2 w-9 h-5 rounded-full flex items-center px-0.5 transition-colors duration-150 ${
-                      isAnonymous
-                        ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] justify-end"
-                        : "bg-gray-300 justify-start"
-                    }`}
-                  >
-                    <span className="w-4 h-4 bg-white rounded-full shadow-sm" />
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowMenu(false)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700"
-                >
-                  <IoBookmarkOutline className="w-5 h-5" />
-                  <span className="font-semibold text-md">Bookmark</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowMenu(false)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-red-500"
-                >
-                  <FiFlag className="w-5 h-5" />
-                  <span className="font-semibold text-md">Report</span>
-                </button>
+                {isOwner ? (
+                  // Owner's menu: Edit and Delete
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleEdit}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700"
+                    >
+                      <FiEdit className="w-5 h-5" />
+                      <span className="font-semibold text-md">Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-red-500"
+                    >
+                      <MdDelete className="w-5 h-5" />
+                      <span className="font-semibold text-md">Delete</span>
+                    </button>
+                  </>
+                ) : (
+                  // Non-owner's menu: Vote Anonymously, Bookmark, Report
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAnonymous((prev) => !prev);
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-2.5 gap-3 text-sm font-medium rounded-lg bg-white hover:bg-gray-50 text-gray-800 transition-colors duration-150 cursor-pointer"
+                    >
+                      <img
+                        src="/anonymous.svg"
+                        alt="anonymous vote"
+                        className="w-5 h-5"
+                      />
+                      <span className="font-semibold text-md flex-1 text-left">
+                        Vote Anonymously?
+                      </span>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsAnonymous((prev) => !prev);
+                        }}
+                        className={`ml-2 w-9 h-5 rounded-full flex items-center px-0.5 transition-colors duration-150 ${
+                          isAnonymous
+                            ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] justify-end"
+                            : "bg-gray-300 justify-start"
+                        }`}
+                      >
+                        <span className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowMenu(false)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700"
+                    >
+                      <IoBookmarkOutline className="w-5 h-5" />
+                      <span className="font-semibold text-md">Bookmark</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowMenu(false)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-red-500"
+                    >
+                      <FiFlag className="w-5 h-5" />
+                      <span className="font-semibold text-md">Report</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
