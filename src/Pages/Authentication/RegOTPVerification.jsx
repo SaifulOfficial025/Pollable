@@ -1,11 +1,43 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Button from "../../Shared/Button";
 import { FaArrowLeft } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { verifyOtp, resendOtp } from "../../Redux/Auth/OTP";
+import { saveSignInData } from "../../Redux/Auth/Signin";
 
 function RegOTPVerification() {
-  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const inputRefs = useRef([]);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [phone, setPhone] = useState(() => {
+    const fromNav = location.state?.phone;
+    if (fromNav) return fromNav;
+
+    const cached = localStorage.getItem("pendingRegistration");
+    if (!cached) return "";
+    try {
+      const parsed = JSON.parse(cached);
+      return parsed?.phone || "";
+    } catch {
+      return "";
+    }
+  });
+
+  const [submitError, setSubmitError] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [timer, setTimer] = useState(120);
+
+  const formattedTimer = () => {
+    const minutes = Math.floor(timer / 60);
+    const seconds = timer % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
   const handleChange = (index, value) => {
     if (!/^[0-9]?$/.test(value)) return;
@@ -27,10 +59,62 @@ function RegOTPVerification() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    setSubmitError("");
+    setInfoMessage("");
     const code = otp.join("");
-    // TODO: integrate real OTP verification
-    console.log("Verify OTP:", code);
+
+    if (!phone) {
+      setSubmitError("Missing phone number. Please sign up again.");
+      return;
+    }
+
+    if (code.length < 6) {
+      setSubmitError("Enter the 6-digit code.");
+      return;
+    }
+
+    setIsLoading(true);
+    verifyOtp({ phone, otp: code })
+      .then((response) => {
+        saveSignInData(response);
+        localStorage.removeItem("pendingRegistration");
+        navigate("/");
+      })
+      .catch((error) => {
+        setSubmitError(error?.message || "Verification failed. Try again.");
+      })
+      .finally(() => setIsLoading(false));
   };
+
+  const handleResend = () => {
+    if (!phone || resendLoading || timer > 0) return;
+
+    setSubmitError("");
+    setInfoMessage("");
+    setResendLoading(true);
+    resendOtp({ phone })
+      .then((response) => {
+        setInfoMessage(response?.message || "OTP sent again.");
+        setTimer(120);
+      })
+      .catch((error) => {
+        setSubmitError(error?.message || "Unable to resend code.");
+      })
+      .finally(() => setResendLoading(false));
+  };
+
+  useEffect(() => {
+    if (timer <= 0) return undefined;
+    const id = setInterval(() => setTimer((t) => Math.max(t - 1, 0)), 1000);
+    return () => clearInterval(id);
+  }, [timer]);
+
+  useEffect(() => {
+    // If no phone is available, send user back to signup.
+    if (!phone) {
+      navigate("/signup");
+    }
+  }, [phone, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -55,7 +139,7 @@ function RegOTPVerification() {
           </h1>
           <p className="text-sm text-gray-500 mb-8">
             Enter the code sent to:{" "}
-            <span className="font-medium">+8801757976790</span>
+            <span className="font-medium">{phone || "N/A"}</span>
           </p>
 
           <form
@@ -80,28 +164,40 @@ function RegOTPVerification() {
               ))}
             </div>
 
-            <p className="text-xs text-gray-400 mb-3">00:120 Sec</p>
-            <p className="text-xs text-gray-500 mb-8">
+            <p className="text-xs text-gray-400 mb-3">
+              {timer > 0
+                ? `Resend available in ${formattedTimer()}`
+                : "You can resend now"}
+            </p>
+            <p className="text-xs text-gray-500 mb-4">
               Didn&apos;t receive a code?{" "}
               <button
                 type="button"
-                className="text-[#4a90e2] font-medium hover:underline"
+                onClick={handleResend}
+                disabled={timer > 0 || resendLoading}
+                className="text-[#4a90e2] font-medium hover:underline disabled:opacity-60"
               >
-                Resend
+                {resendLoading ? "Resending..." : "Resend"}
               </button>
             </p>
 
+            {submitError && (
+              <p className="text-sm text-red-500 mb-2">{submitError}</p>
+            )}
+            {infoMessage && (
+              <p className="text-sm text-green-600 mb-2">{infoMessage}</p>
+            )}
+
             <div className="w-full max-w-md">
-              <Link to="/">
-                <Button
-                  type="submit"
-                  fullWidth
-                  size="lg"
-                  className="rounded-lg"
-                >
-                  Verify
-                </Button>
-              </Link>
+              <Button
+                type="submit"
+                fullWidth
+                size="lg"
+                className="rounded-lg"
+                disabled={isLoading}
+              >
+                {isLoading ? "Verifying..." : "Verify"}
+              </Button>
             </div>
           </form>
         </div>

@@ -5,11 +5,14 @@ import { FaArrowTrendUp } from "react-icons/fa6";
 import { IoIosHeartEmpty } from "react-icons/io";
 import { IoPeopleOutline } from "react-icons/io5";
 import Button from "../../Shared/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { saveSignInData, signInUser } from "../../Redux/Auth/Signin";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const navigate = useNavigate();
 
   const {
     register,
@@ -17,17 +20,33 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      email: "",
+      phone: "",
       password: "",
       rememberAccount: false,
     },
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
+    setSubmitError("");
     setIsLoading(true);
-    // TODO: integrate real auth
-    console.log(data);
-    setTimeout(() => setIsLoading(false), 500);
+
+    try {
+      const response = await signInUser({
+        phone: data.phone,
+        password: data.password,
+      });
+
+      saveSignInData(response);
+      localStorage.setItem(
+        "rememberMe",
+        JSON.stringify(Boolean(data.rememberAccount)),
+      );
+      navigate("/");
+    } catch (error) {
+      setSubmitError(error.message || "Unable to sign in. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -116,30 +135,30 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
-            {/* Email */}
+            {/* Phone Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Email or Phone Number
+                Phone Number
               </label>
               <div className="mt-2">
                 <input
-                  type="email"
+                  type="tel"
                   className={`w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4a90e2] focus:border-transparent ${
-                    errors.email ? "border-red-400" : ""
+                    errors.phone ? "border-red-400" : ""
                   }`}
-                  placeholder="Email"
-                  {...register("email", {
-                    required: "Email is required",
+                  placeholder="Phone Number (including country code. e.g. +1234567890)"
+                  {...register("phone", {
+                    required: "Phone number is required",
                     pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email format",
+                      value: /^\+[1-9]\d{6,14}$/,
+                      message: "Use valid format like +8801751379009",
                     },
                   })}
                 />
               </div>
-              {errors.email && (
+              {errors.phone && (
                 <p className="mt-1 text-xs text-red-500">
-                  {errors.email.message}
+                  {errors.phone.message}
                 </p>
               )}
             </div>
@@ -183,6 +202,7 @@ export default function LoginPage() {
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-gray-300 text-[#4a90e2] focus:ring-[#4a90e2]"
+                    {...register("rememberAccount")}
                   />
                   Remember Me
                 </label>
@@ -203,6 +223,10 @@ export default function LoginPage() {
                 {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </div>
+
+            {submitError && (
+              <p className="text-sm text-red-500 text-center">{submitError}</p>
+            )}
           </form>
 
           <p className="mt-6 text-center text-xs md:text-sm text-gray-500">

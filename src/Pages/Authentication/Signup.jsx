@@ -5,12 +5,16 @@ import { FaArrowTrendUp } from "react-icons/fa6";
 import { IoIosHeartEmpty } from "react-icons/io";
 import { IoPeopleOutline } from "react-icons/io5";
 import Button from "../../Shared/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { savePendingRegistration, signUpUser } from "../../Redux/Auth/Signup";
 
 function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  const navigate = useNavigate();
 
   const {
     register,
@@ -31,10 +35,29 @@ function Signup() {
   });
 
   const onSubmit = (data) => {
+    setSubmitError("");
     setIsLoading(true);
-    // TODO: integrate real signup
-    console.log("Signup data", data);
-    setTimeout(() => setIsLoading(false), 500);
+
+    const payload = {
+      username: data.username.trim(),
+      name: data.fullName.trim(),
+      phone: data.phone.trim(),
+      password: data.password,
+    };
+
+    signUpUser(payload)
+      .then(() => {
+        savePendingRegistration(payload);
+        navigate("/registration-otp-verification", {
+          state: { phone: payload.phone },
+        });
+      })
+      .catch((error) => {
+        setSubmitError(
+          error?.message || "Unable to sign up. Please try again.",
+        );
+      })
+      .finally(() => setIsLoading(false));
   };
 
   const passwordValue = watch("password");
@@ -152,49 +175,26 @@ function Signup() {
             </div>
 
             {/* Name */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  First Name<span className="text-red-500">*</span>
+                  Full Name<span className="text-red-500">*</span>
                 </label>
                 <div className="mt-2">
                   <input
                     type="text"
                     className={`w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4a90e2] focus:border-transparent ${
-                      errors.firstName ? "border-red-400" : ""
+                      errors.fullName ? "border-red-400" : ""
                     }`}
-                    placeholder="Enter first name"
-                    {...register("firstName", {
-                      required: "First name is required",
+                    placeholder="Enter full name"
+                    {...register("fullName", {
+                      required: "Full name is required",
                     })}
                   />
                 </div>
-                {errors.firstName && (
+                {errors.fullName && (
                   <p className="mt-1 text-xs text-red-500">
-                    {errors.firstName.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Last Name<span className="text-red-500">*</span>
-                </label>
-                <div className="mt-2">
-                  <input
-                    type="text"
-                    className={`w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4a90e2] focus:border-transparent ${
-                      errors.lastName ? "border-red-400" : ""
-                    }`}
-                    placeholder="Enter last name"
-                    {...register("lastName", {
-                      required: "Last name is required",
-                    })}
-                  />
-                </div>
-                {errors.lastName && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.lastName.message}
+                    {errors.fullName.message}
                   </p>
                 )}
               </div>
@@ -211,9 +211,13 @@ function Signup() {
                   className={`w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4a90e2] focus:border-transparent ${
                     errors.phone ? "border-red-400" : ""
                   }`}
-                  placeholder="+880 phone number"
+                  placeholder="Include country code. e.g. +1234567890"
                   {...register("phone", {
                     required: "Phone number is required",
+                    pattern: {
+                      value: /^\+[1-9]\d{6,14}$/,
+                      message: "Use valid format like +8801751379009",
+                    },
                   })}
                 />
               </div>
@@ -225,10 +229,9 @@ function Signup() {
             </div>
 
             {/* Email (optional) */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700">
                 Email
-                {/* <span className="text-gray-400 text-xs">(Optional)</span> */}
               </label>
               <div className="mt-2">
                 <input
@@ -250,7 +253,7 @@ function Signup() {
                   {errors.email.message}
                 </p>
               )}
-            </div>
+            </div> */}
 
             {/* Password and Confirm Password */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -359,17 +362,20 @@ function Signup() {
 
             {/* Submit Button */}
             <div className="pt-1">
-              <Link to="/registration-otp-verification">
-                <Button
-                  type="submit"
-                  fullWidth
-                  size="lg"
-                  className="rounded-lg"
-                >
-                  {isLoading ? "Signing Up..." : "Sign Up"}
-                </Button>
-              </Link>
+              <Button
+                type="submit"
+                fullWidth
+                size="lg"
+                className="rounded-lg"
+                disabled={isLoading}
+              >
+                {isLoading ? "Signing Up..." : "Sign Up"}
+              </Button>
             </div>
+
+            {submitError && (
+              <p className="text-sm text-red-500 text-center">{submitError}</p>
+            )}
           </form>
 
           <p className="mt-6 text-center text-xs md:text-sm text-gray-500">

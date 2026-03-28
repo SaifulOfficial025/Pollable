@@ -12,10 +12,13 @@ import {
 import { IoIosLogOut } from "react-icons/io";
 import { Link } from "react-router-dom";
 import NotificationModal from "./NotificationModal";
+import { fetchProfile } from "../../Redux/Auth/Profile";
+import { API_BASE_URL } from "../../Redux/Config";
 
 function Header() {
   const [open, setOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -28,6 +31,45 @@ function Header() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  useEffect(() => {
+    const loadProfile = async () => {
+      const token =
+        localStorage.getItem("accessToken") ||
+        sessionStorage.getItem("accessToken");
+      if (!token) {
+        const cached = localStorage.getItem("profileData");
+        if (cached) {
+          try {
+            setProfile(JSON.parse(cached));
+          } catch {
+            setProfile(null);
+          }
+        }
+        return;
+      }
+
+      try {
+        const response = await fetchProfile();
+        const profileData = response?.data || null;
+        setProfile(profileData);
+        if (profileData) {
+          localStorage.setItem("profileData", JSON.stringify(profileData));
+        }
+      } catch {
+        const cached = localStorage.getItem("profileData");
+        if (cached) {
+          try {
+            setProfile(JSON.parse(cached));
+          } catch {
+            setProfile(null);
+          }
+        }
+      }
+    };
+
+    loadProfile();
+  }, []);
+
   const menuItems = [
     { label: "Settings", Icon: CiSettings },
     { label: "Recent Activity", Icon: MdOutlineSettingsBackupRestore },
@@ -35,6 +77,12 @@ function Header() {
   ];
 
   const navigate = useNavigate();
+  const profileImageUrl = profile?.image
+    ? profile.image.startsWith("http")
+      ? profile.image
+      : `${API_BASE_URL}${profile.image}`
+    : "/dummyavatar.jpg";
+  const profileName = profile?.name || profile?.username || "User";
 
   return (
     <header className="w-full bg-white border-b border-gray-100 shadow-sm">
@@ -83,10 +131,13 @@ function Header() {
 
           <div className="flex items-center gap-2" ref={menuRef}>
             <img
-              src="/dummyavatar.jpg"
+              src={profileImageUrl}
               alt="avatar"
               className="w-8 h-8 rounded-full object-cover"
             />
+            <span className="hidden md:block text-sm text-gray-700 max-w-[120px] truncate">
+              {profileName}
+            </span>
             <button
               onClick={() => setOpen((s) => !s)}
               className="flex items-center gap-1 text-gray-600 hover:text-gray-800"
@@ -113,7 +164,9 @@ function Header() {
                             navigate("/activity");
                             break;
                           case "Log out":
-                            navigate("/logout");
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            navigate("/signin");
                             break;
                           default:
                             break;

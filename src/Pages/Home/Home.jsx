@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Container from "../../Layout/Container/Container";
 import Header from "./Header";
 import PollCard from "./PollCard";
@@ -7,8 +7,58 @@ import Sidebar from "./Sidebar";
 import { IoAddCircleOutline } from "react-icons/io5";
 import PollCardWithOneImage from "./PollCardWithOneImage";
 import PollCardwithMultiImage from "./PollCardwithMultiImage";
+import { fetchProfile } from "../../Redux/Auth/Profile";
+import { API_BASE_URL } from "../../Redux/Config";
 
 const Home = () => {
+  const [profile, setProfile] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState("/dummyavatar.jpg");
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const cached = localStorage.getItem("profileData");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setProfile(parsed);
+          if (parsed?.image) {
+            setAvatarUrl(
+              parsed.image.startsWith("http")
+                ? parsed.image
+                : `${API_BASE_URL}${parsed.image}`,
+            );
+          }
+        } catch {
+          // ignore parse errors
+        }
+      }
+
+      const token =
+        localStorage.getItem("accessToken") ||
+        sessionStorage.getItem("accessToken");
+      if (!token) return;
+
+      try {
+        const response = await fetchProfile();
+        const data = response?.data || null;
+        if (data) {
+          setProfile(data);
+          localStorage.setItem("profileData", JSON.stringify(data));
+          if (data.image) {
+            setAvatarUrl(
+              data.image.startsWith("http")
+                ? data.image
+                : `${API_BASE_URL}${data.image}`,
+            );
+          }
+        }
+      } catch {
+        // leave cached avatar if fetch fails
+      }
+    };
+
+    loadProfile();
+  }, []);
   // Dummy poll data
   const pollData1 = {
     user: {
@@ -432,7 +482,7 @@ const Home = () => {
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                 <div className="flex items-center gap-3 flex-1">
                   <img
-                    src="/dummyavatar.jpg"
+                    src={avatarUrl}
                     alt="avatar"
                     className="w-10 h-10 rounded-full"
                   />

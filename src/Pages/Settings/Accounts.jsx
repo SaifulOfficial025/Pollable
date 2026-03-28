@@ -1,8 +1,38 @@
 import React, { useState } from "react";
 import Button from "../../Shared/Button";
+import { deleteAccount } from "../../Redux/Auth/DeleteAccount";
+import { useNavigate } from "react-router-dom";
 
 function Accounts() {
   const [notifications, setNotifications] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const clearAuthStorage = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("authResponse");
+    localStorage.removeItem("profileData");
+    localStorage.removeItem("isLoggedIn");
+    sessionStorage.removeItem("accessToken");
+  };
+
+  const handleDelete = async () => {
+    if (isDeleting) return;
+
+    setError("");
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      clearAuthStorage();
+      navigate("/signin");
+    } catch (err) {
+      setError(err?.message || "Failed to delete account.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -60,10 +90,19 @@ function Accounts() {
             </div>
           </div>
 
-          <button className="px-4 py-2 rounded-md border border-red-200 text-sm text-red-500 hover:bg-red-50 w-full sm:w-auto text-center">
-            Delete
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="px-4 py-2 rounded-md border border-red-200 text-sm text-red-500 hover:bg-red-50 w-full sm:w-auto text-center disabled:opacity-60"
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
           </button>
         </div>
+        {error && (
+          <p className="text-xs text-red-500 mt-2" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

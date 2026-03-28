@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
 import Button from "../../Shared/Button";
 import ChooseTopicComponent from "./ChooseTopicComponent";
 import PollSettingsComponent from "./PollSettingsComponent";
+import { API_BASE_URL } from "../../Redux/Config";
 
 function TextPostPoll({ isEmbedded = false }) {
   const [open, setOpen] = useState(false);
@@ -76,6 +77,8 @@ function TextPostPoll({ isEmbedded = false }) {
   ]);
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [allowComments, setAllowComments] = useState(true);
+  const [profileName, setProfileName] = useState("You");
+  const [avatarUrl, setAvatarUrl] = useState("/dummyavatar.jpg");
 
   function addOption() {
     setOptions((s) => [...s, `Option ${s.length + 1}`]);
@@ -107,6 +110,26 @@ function TextPostPoll({ isEmbedded = false }) {
       return () => window.removeEventListener("openPostPoll", handleOpen);
     }
   }, [isEmbedded]);
+
+  useEffect(() => {
+    const cached = localStorage.getItem("profileData");
+    if (!cached) return;
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed?.name || parsed?.username) {
+        setProfileName(parsed.name || parsed.username || "You");
+      }
+      if (parsed?.image) {
+        setAvatarUrl(
+          parsed.image.startsWith("http")
+            ? parsed.image
+            : `${API_BASE_URL}${parsed.image}`,
+        );
+      }
+    } catch {
+      // ignore malformed cached data
+    }
+  }, []);
 
   // If embedded, just render the content without modal
   if (isEmbedded) {
@@ -177,12 +200,12 @@ function TextPostPoll({ isEmbedded = false }) {
             <div className="mt-3 border border-gray-100 rounded-xl p-4">
               <div className="flex items-center gap-3">
                 <img
-                  src="/dummyavatar.jpg"
+                  src={avatarUrl}
                   alt="avatar"
                   className="w-8 h-8 rounded-full"
                 />
                 <div>
-                  <div className="text-sm font-semibold">You</div>
+                  <div className="text-sm font-semibold">{profileName}</div>
                   <div className="text-xs text-gray-400">Just now</div>
                 </div>
               </div>
@@ -235,7 +258,7 @@ function TextPostPoll({ isEmbedded = false }) {
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-3 flex-1">
               <img
-                src="/dummyavatar.jpg"
+                src={avatarUrl}
                 alt="avatar"
                 className="w-10 h-10 rounded-full"
               />
@@ -345,12 +368,14 @@ function TextPostPoll({ isEmbedded = false }) {
                   <div className="mt-3 border border-gray-100 rounded-xl p-4">
                     <div className="flex items-center gap-3">
                       <img
-                        src="/dummyavatar.jpg"
+                        src={avatarUrl}
                         alt="avatar"
                         className="w-8 h-8 rounded-full"
                       />
                       <div>
-                        <div className="text-sm font-semibold">You</div>
+                        <div className="text-sm font-semibold">
+                          {profileName}
+                        </div>
                         <div className="text-xs text-gray-400">Just now</div>
                       </div>
                     </div>

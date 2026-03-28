@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { IoImage } from "react-icons/io5";
 import Button from "../../Shared/Button";
@@ -6,12 +6,15 @@ import ChooseTopicComponent from "./ChooseTopicComponent";
 import PollSettingsComponent from "./PollSettingsComponent";
 import { Link } from "react-router-dom";
 import uploadicon from "../../../public/uploadicon.svg";
+import { API_BASE_URL } from "../../Redux/Config";
 
 function SingleImagePostPoll({ isEmbedded = false }) {
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(["Option 1", "Option 2"]);
   const [uploadedImage, setUploadedImage] = useState(null);
   const fileInputRef = useRef(null);
+  const [profileName, setProfileName] = useState("You");
+  const [avatarUrl, setAvatarUrl] = useState("/dummyavatar.jpg");
   const [topics] = useState([
     {
       name: "Technology",
@@ -80,6 +83,26 @@ function SingleImagePostPoll({ isEmbedded = false }) {
   ]);
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [allowComments, setAllowComments] = useState(true);
+
+  useEffect(() => {
+    const cached = localStorage.getItem("profileData");
+    if (!cached) return;
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed?.name || parsed?.username) {
+        setProfileName(parsed.name || parsed.username || "You");
+      }
+      if (parsed?.image) {
+        setAvatarUrl(
+          parsed.image.startsWith("http")
+            ? parsed.image
+            : `${API_BASE_URL}${parsed.image}`,
+        );
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
 
   function addOption() {
     setOptions((s) => [...s, `Option ${s.length + 1}`]);
@@ -208,12 +231,12 @@ function SingleImagePostPoll({ isEmbedded = false }) {
           <div className="mt-3 border border-gray-100 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <img
-                src="/dummyavatar.jpg"
+                src={avatarUrl}
                 alt="avatar"
                 className="w-8 h-8 rounded-full"
               />
               <div>
-                <div className="text-sm font-semibold">You</div>
+                <div className="text-sm font-semibold">{profileName}</div>
                 <div className="text-xs text-gray-400">Just now</div>
               </div>
             </div>
