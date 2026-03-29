@@ -53,8 +53,14 @@ function PollCardWithOneImage({ pollData }) {
     likes = 245,
     comments = 82,
     Polloftheday = false,
+    poll_of_the_day = false,
+    is_poll_of_the_day = false,
     isOwner = false,
   } = pollData || {};
+
+  const isPollOfTheDay = Boolean(
+    Polloftheday || poll_of_the_day || is_poll_of_the_day,
+  );
 
   const handleEdit = () => {
     // Dispatch custom event to open the CreatePost modal with poll data
@@ -73,8 +79,8 @@ function PollCardWithOneImage({ pollData }) {
     <>
       <div
         className={`max-w-full rounded-2xl border shadow-sm p-3 sm:p-5 ${
-          Polloftheday
-            ? "bg-gradient-to-br from-[#dbe8f9] to-[#e5d8fb] border-purple-200"
+          isPollOfTheDay
+            ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] border-transparent text-white"
             : "bg-white border-gray-100"
         }`}
       >
@@ -90,7 +96,7 @@ function PollCardWithOneImage({ pollData }) {
               <div>
                 <div className="text-md font-bold text-black">{user.name}</div>
                 <div className="text-xs text-gray-600">
-                  {Polloftheday ? (
+                  {isPollOfTheDay ? (
                     <span className="flex items-center gap-1 font-semibold text-purple-600">
                       <span>⭐</span>
                       Poll of the day

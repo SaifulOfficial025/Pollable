@@ -18,6 +18,46 @@ const getStoredAccessToken = () => {
   }
 };
 
+const formatRelativeTime = (value) => {
+  if (!value) return "Just now";
+
+  const toDate = (input) => {
+    if (!input) return null;
+    if (input instanceof Date) return input;
+    const asDate = new Date(input);
+    if (!Number.isNaN(asDate.getTime())) return asDate;
+    const asNumber = Number(input);
+    if (!Number.isNaN(asNumber)) {
+      const fromNumber = new Date(asNumber);
+      if (!Number.isNaN(fromNumber.getTime())) return fromNumber;
+    }
+    return null;
+  };
+
+  const date = toDate(value);
+  if (!date) return "Just now";
+
+  const now = new Date();
+  const diffMs = now - date;
+  const diffSeconds = Math.max(0, Math.floor(diffMs / 1000));
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  // Within the first day: show minutes/hours granularity
+  if (diffSeconds < 45) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+
+  // Beyond 1 day: show calendar date (month/day, add year if different)
+  const showYear = date.getFullYear() !== now.getFullYear();
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(showYear ? { year: "numeric" } : {}),
+  });
+};
+
 export const POLLS_WS_URL = "ws://10.10.13.95:8500/ws/polls/";
 
 export function createPollsSocket({
@@ -141,7 +181,9 @@ export const normalizePoll = (poll) => {
     user: {
       name: userName,
       avatar,
-      timeAgo: poll.timeAgo || poll.created_at || "Just now",
+      timeAgo: formatRelativeTime(
+        poll.created_at || poll.timeAgo || user.timeAgo,
+      ),
     },
   };
 };
