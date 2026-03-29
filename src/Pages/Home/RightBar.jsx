@@ -1,10 +1,14 @@
 import React from "react";
 import { AiFillStar } from "react-icons/ai";
 import { IoMdTrendingUp } from "react-icons/io";
-import { FaUsers } from "react-icons/fa";
 import Button from "../../Shared/Button";
 
-function RightBar() {
+function RightBar({
+  pollOfTheDay,
+  onViewPollOfTheDay,
+  trendingPolls = [],
+  onSelectTrendingPoll,
+}) {
   return (
     <aside className="hidden md:block w-full space-y-4">
       {/* Poll of the Day */}
@@ -19,18 +23,20 @@ function RightBar() {
         </div>
 
         <div className="mt-3  rounded-lg p-3">
-          <p className="text-md font-semibold text-black font-medium">
-            Should companies be required to disclose salary ranges in job
-            postings?
+          <p className="text-md font-semibold text-black font-medium line-clamp-3">
+            {pollOfTheDay?.question || "Poll coming soon"}
           </p>
 
           <div className="mt-3 flex items-center justify-between">
-            <div className="text-xs text-gray-500">23.4K votes</div>
+            <div className="text-xs text-gray-500">
+              {pollOfTheDay ? `${pollOfTheDay.voteTotal || 0} votes` : ""}
+            </div>
             <Button
               size="md"
-              onClick={() => alert("Vote functionality coming soon!")}
+              disabled={!pollOfTheDay}
+              onClick={onViewPollOfTheDay}
             >
-              Vote Now
+              View Poll
             </Button>
           </div>
         </div>
@@ -44,27 +50,38 @@ function RightBar() {
             Trending Polls
           </h4>
         </div>
+        {trendingPolls.length ? (
+          <ul className="mt-3 space-y-3 text-sm text-black max-h-80 overflow-y-auto pr-1">
+            {trendingPolls.map((poll, idx) => {
+              const votesLabel = `${Number(poll.voteTotal || 0).toLocaleString()} votes`;
+              const borderClass = idx === 0 ? "" : "border-t pt-3";
 
-        <ul className="mt-3 space-y-3 text-sm text-black ">
-          <li className="hover:scale-105 transition-transform duration-150">
-            <div className="font-medium">
-              Should remote work be a legal right?
-            </div>
-            <div className="text-xs text-gray-400 mt-1">15.2K votes</div>
-          </li>
-
-          <li className="border-t pt-3 hover:scale-105 transition-transform duration-150">
-            <div className="font-medium">Electric vehicles by 2030?</div>
-            <div className="text-xs text-gray-400 mt-1">12.8K votes</div>
-          </li>
-
-          <li className="border-t pt-3 hover:scale-105 transition-transform duration-150">
-            <div className="font-medium">
-              Universal basic income feasibility
-            </div>
-            <div className="text-xs text-gray-400 mt-1">9.4K votes</div>
-          </li>
-        </ul>
+              return (
+                <li
+                  key={poll.id || idx}
+                  className={`${borderClass} hover:scale-105 transition-transform duration-150`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onSelectTrendingPoll?.(poll)}
+                    className="text-left w-full"
+                  >
+                    <div className="font-medium line-clamp-2">
+                      {poll.question || "Untitled poll"}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {votesLabel}
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="mt-3 text-sm text-gray-500">
+            No trending polls yet.
+          </div>
+        )}
       </div>
 
       {/* Suggested Polls */}

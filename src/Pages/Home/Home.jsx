@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Container from "../../Layout/Container/Container";
 import Header from "./Header";
 import PollCard from "./PollCard";
@@ -9,10 +9,25 @@ import PollCardWithOneImage from "./PollCardWithOneImage";
 import PollCardwithMultiImage from "./PollCardwithMultiImage";
 import { fetchProfile } from "../../Redux/Auth/Profile";
 import { API_BASE_URL } from "../../Redux/Config";
+import { createPollsSocket, normalizePoll } from "../../Redux/Polls/FetchPolls";
 
 const Home = () => {
   const [profile, setProfile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState("/dummyavatar.jpg");
+  const [polls, setPolls] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [socketReady, setSocketReady] = useState(false);
+  const loadMoreRef = useRef(null);
+  const socketRef = useRef(null);
+  const limit = 10;
+  const nextTriggerIndexRef = useRef(7);
+  const [feedError, setFeedError] = useState("");
+  const [hasReceivedData, setHasReceivedData] = useState(false);
+  const [pollOfTheDay, setPollOfTheDay] = useState(null);
+  const [trendingPolls, setTrendingPolls] = useState([]);
+  const [savedDrafts, setSavedDrafts] = useState([]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -59,411 +74,260 @@ const Home = () => {
 
     loadProfile();
   }, []);
-  // Dummy poll data
-  const pollData1 = {
-    user: {
-      name: "Sarah Mitchell",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      timeAgo: "2 hours ago",
-    },
-    question: "What's your preferred work setup post-pandemic?",
-    options: [
-      { label: "Fully Remote", votes: 684, percent: 68 },
-      { label: "Hybrid (2-3 days office)", votes: 241, percent: 24 },
-      { label: "Full-time Office", votes: 80, percent: 8 },
-    ],
-    likes: 342,
-    comments: 156,
+
+  useEffect(() => {
+    let closed = false;
+
+    const socketInstance = createPollsSocket({
+      onOpen: () => {
+        setFeedError("");
+        setSocketReady(true);
+      },
+      onMessage: (payload) => {
+        setFeedError("");
+
+        if (payload?.type === "poll_of_the_day") {
+          const pod = normalizePoll(payload?.data?.poll || payload?.data);
+          if (pod) {
+            setPollOfTheDay(pod);
+          }
+          return;
+        }
+
+        const trendingIndicators = [
+          payload?.action,
+          payload?.type,
+          payload?.event,
+          payload?.data?.action,
+          payload?.data?.type,
+          payload?.data?.event,
+        ];
+
+        const isTrending =
+          trendingIndicators.some(
+            (flag) =>
+              typeof flag === "string" &&
+              flag.toLowerCase().includes("trending"),
+          ) ||
+          Array.isArray(payload?.data?.trending_polls) ||
+          Array.isArray(payload?.trending_polls);
+
+        if (isTrending) {
+          const trendingCandidates = [
+            payload?.data?.trending_polls,
+            payload?.trending_polls,
+            payload?.data?.results,
+            payload?.data?.polls,
+            payload?.results,
+            payload?.polls,
+            payload?.data,
+          ];
+
+          const rawTrending =
+            trendingCandidates.find((c) => Array.isArray(c)) || [];
+          const normalizedTrending = rawTrending
+            .map((p) => normalizePoll(p))
+            .filter(Boolean);
+          setTrendingPolls(normalizedTrending);
+          return;
+        }
+
+        const draftsIndicators = [
+          payload?.action,
+          payload?.type,
+          payload?.event,
+          payload?.data?.action,
+          payload?.data?.type,
+          payload?.data?.event,
+        ];
+
+        const isDrafts =
+          draftsIndicators.some(
+            (flag) =>
+              typeof flag === "string" && flag.toLowerCase().includes("draft"),
+          ) ||
+          Array.isArray(payload?.data?.drafts) ||
+          Array.isArray(payload?.drafts);
+
+        if (isDrafts) {
+          const draftCandidates = [
+            payload?.data?.drafts,
+            payload?.drafts,
+            payload?.data?.results,
+            payload?.data?.polls,
+            payload?.results,
+            payload?.polls,
+            payload?.data,
+          ];
+
+          const rawDrafts = draftCandidates.find((c) => Array.isArray(c)) || [];
+          const normalizedDrafts = rawDrafts
+            .map((p) => normalizePoll(p))
+            .filter(Boolean);
+          setSavedDrafts(normalizedDrafts);
+          return;
+        }
+
+        const candidates = [
+          payload?.data?.results,
+          payload?.data?.polls,
+          payload?.data?.data?.results,
+          payload?.results,
+          payload?.polls,
+          payload?.data,
+        ];
+        const rawList = candidates.find((c) => Array.isArray(c)) || [];
+
+        const hasMoreFlag =
+          payload?.data?.has_more ??
+          payload?.has_more ??
+          (Array.isArray(rawList) && rawList.length === limit);
+
+        if (!rawList.length) {
+          // Treat as end of feed but keep previous items visible
+          setHasMore(Boolean(hasMoreFlag));
+          setHasReceivedData(true);
+          setIsLoading(false);
+          return;
+        }
+
+        const normalized = rawList.map((p) => normalizePoll(p)).filter(Boolean);
+
+        setPolls((prev) => {
+          const merged = [...prev, ...normalized];
+          // Update next trigger index for prefetch (8th item after the latest batch)
+          nextTriggerIndexRef.current =
+            prev.length + Math.min(7, normalized.length - 1);
+          return merged;
+        });
+
+        // If fewer than limit, assume no more pages
+        setHasReceivedData(true);
+        setHasMore(Boolean(hasMoreFlag));
+        setIsLoading(false);
+      },
+      onError: () => {
+        setFeedError("Unable to load polls from the server.");
+        setIsLoading(false);
+        setHasMore(false);
+      },
+      onClose: () => {
+        if (!closed) setSocketReady(false);
+      },
+    });
+
+    socketRef.current = socketInstance;
+
+    return () => {
+      closed = true;
+      socketInstance?.close?.();
+    };
+  }, []);
+
+  // initial fetch
+  useEffect(() => {
+    if (!socketReady || !socketRef.current) return;
+    setIsLoading(true);
+    socketRef.current.sendGetFeed({ limit, offset: 0 });
+    socketRef.current.sendGetTrending({ hours: 24, limit: 10 });
+    socketRef.current.sendGetMyDrafts({ limit: 20, offset: 0 });
+    setOffset(limit);
+  }, [socketReady]);
+
+  const handleSearch = (query) => {
+    if (!socketReady || !socketRef.current) return;
+    const trimmed = (query || "").trim();
+    if (!trimmed) return;
+
+    setIsLoading(true);
+    setHasMore(true);
+    setHasReceivedData(false);
+    setPolls([]);
+    socketRef.current.sendSearchPolls({ query: trimmed, limit: 20, offset: 0 });
   };
 
-  const pollData2 = {
-    user: {
-      name: "Michael Chen",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      timeAgo: "5 hours ago",
-    },
-    question:
-      "Which programming language should I learn next for web development?",
-    options: [
-      { label: "TypeScript", votes: 580, percent: 45 },
-      { label: "Python", votes: 390, percent: 30 },
-      { label: "Go", votes: 195, percent: 15 },
-      { label: "Rust", votes: 130, percent: 10 },
-    ],
-    likes: 289,
-    comments: 94,
+  const viewPollOfTheDay = () => {
+    if (!pollOfTheDay) return;
+    setPolls([pollOfTheDay]);
+    setHasMore(false);
+    setHasReceivedData(true);
+    setIsLoading(false);
   };
 
-  const pollWithImageData = {
-    user: {
-      name: "Emma Rodriguez",
-      avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-      timeAgo: "1 hour ago",
-    },
-    question: "Which social media platform do you use most for news?",
-    bannerImage:
-      "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=800&h=400&fit=crop",
-    options: [
-      { label: "Twitter/X", votes: 420, percent: 42 },
-      { label: "Reddit", votes: 260, percent: 26 },
-      { label: "Instagram", votes: 190, percent: 19 },
-      { label: "Traditional news sites", votes: 130, percent: 13 },
-    ],
-    likes: 567,
-    comments: 203,
-    Polloftheday: true,
+  const viewTrendingPoll = (poll) => {
+    if (!poll) return;
+    setPolls([poll]);
+    setHasMore(false);
+    setHasReceivedData(true);
+    setIsLoading(false);
   };
 
-  const pollWithMultiImageData = {
-    user: {
-      name: "Alex Thompson",
-      avatar: "https://randomuser.me/api/portraits/men/75.jpg",
-      timeAgo: "3 hours ago",
-    },
-    question:
-      "Which travel destination would you choose for your next vacation?",
-    options: [
-      {
-        id: 1,
-        label: "Tokyo, Japan",
-        image:
-          "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=400&fit=crop",
-        votes: 340,
-        percent: 34,
-      },
-      {
-        id: 2,
-        label: "Paris, France",
-        image:
-          "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=400&fit=crop",
-        votes: 280,
-        percent: 28,
-      },
-      {
-        id: 3,
-        label: "Santorini, Greece",
-        image:
-          "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=400&h=400&fit=crop",
-        votes: 240,
-        percent: 24,
-      },
-      {
-        id: 4,
-        label: "Bali, Indonesia",
-        image:
-          "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&h=400&fit=crop",
-        votes: 140,
-        percent: 14,
-      },
-    ],
-    likes: 423,
-    comments: 178,
-    Polloftheday: true,
+  const viewSavedDraft = (poll) => {
+    if (!poll) return;
+    setPolls([poll]);
+    setHasMore(false);
+    setHasReceivedData(true);
+    setIsLoading(false);
   };
 
-  const pollData3 = {
-    user: {
-      name: "Jessica Park",
-      avatar: "https://randomuser.me/api/portraits/women/90.jpg",
-      timeAgo: "8 hours ago",
-    },
-    question:
-      "What's your biggest productivity challenge when working from home?",
-    options: [
-      { label: "Distractions & interruptions", votes: 450, percent: 40 },
-      { label: "Maintaining work-life balance", votes: 338, percent: 30 },
-      { label: "Staying motivated", votes: 225, percent: 20 },
-      { label: "Technical issues", votes: 113, percent: 10 },
-    ],
-    likes: 198,
-    comments: 67,
+  const fetchNext = () => {
+    if (!socketReady || !hasMore || isLoading) return;
+    setIsLoading(true);
+    socketRef.current?.sendGetFeed({ limit, offset });
+    setOffset((o) => o + limit);
   };
 
-  // Extra text-only polls with varying option counts
-  const pollData4 = {
-    user: {
-      name: "David Miller",
-      avatar: "https://randomuser.me/api/portraits/men/17.jpg",
-      timeAgo: "30 minutes ago",
-    },
-    question: "Coffee or tea to start your day?",
-    options: [
-      { label: "Coffee", votes: 510, percent: 68 },
-      { label: "Tea", votes: 240, percent: 32 },
-    ],
-    likes: 154,
-    comments: 41,
-  };
+  // Prefetch when user reaches the 8th poll of current batch
+  useEffect(() => {
+    if (!polls.length) return;
+    const index = nextTriggerIndexRef.current;
+    if (index >= polls.length) return;
 
-  const pollData5 = {
-    user: {
-      name: "Olivia Brown",
-      avatar: "https://randomuser.me/api/portraits/women/37.jpg",
-      timeAgo: "12 hours ago",
-    },
-    question: "Which feature should we build next for our app?",
-    options: [
-      { label: "Dark mode", votes: 420, percent: 35 },
-      { label: "In-app chat", votes: 360, percent: 30 },
-      { label: "Offline support", votes: 300, percent: 25 },
-      { label: "Advanced analytics", votes: 120, percent: 10 },
-    ],
-    likes: 276,
-    comments: 89,
-  };
+    const sentinel = document.querySelector(`[data-poll-index="${index}"]`);
+    if (!sentinel) return;
 
-  // Extra banner-image polls
-  const pollWithImageData2 = {
-    user: {
-      name: "Liam Johnson",
-      avatar: "https://randomuser.me/api/portraits/men/46.jpg",
-      timeAgo: "3 hours ago",
-    },
-    question: "Which type of content do you enjoy most on YouTube?",
-    bannerImage:
-      "https://images.unsplash.com/photo-1516031190212-da133013de50?w=800&h=400&fit=crop",
-    options: [
-      { label: "Tech reviews", votes: 310, percent: 31 },
-      { label: "Vlogs", votes: 260, percent: 26 },
-      { label: "Educational", votes: 290, percent: 29 },
-      { label: "Gaming", votes: 140, percent: 14 },
-    ],
-    likes: 332,
-    comments: 120,
-  };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            fetchNext();
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: "200px" },
+    );
 
-  const pollWithImageData3 = {
-    user: {
-      name: "Noah Smith",
-      avatar: "https://randomuser.me/api/portraits/men/11.jpg",
-      timeAgo: "1 day ago",
-    },
-    question: "Which design style best fits our new landing page?",
-    bannerImage:
-      "https://images.unsplash.com/photo-1522202195461-41b9a15c3b99?w=800&h=400&fit=crop",
-    options: [
-      { label: "Minimal & clean", votes: 380, percent: 38 },
-      { label: "Bold & colorful", votes: 320, percent: 32 },
-      { label: "Illustration heavy", votes: 190, percent: 19 },
-      { label: "Corporate", votes: 110, percent: 11 },
-    ],
-    likes: 241,
-    comments: 63,
-  };
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [polls]);
 
-  // Extra multi-image polls to showcase 2–10 options
-  const pollWithMultiImageData2 = {
-    user: {
-      name: "Isabella Garcia",
-      avatar: "https://randomuser.me/api/portraits/women/52.jpg",
-      timeAgo: "45 minutes ago",
-    },
-    question: "Pick your favorite photography style.",
-    options: [
-      {
-        id: 1,
-        label: "Portrait",
-        image:
-          "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=400&fit=crop",
-        votes: 210,
-        percent: 35,
-      },
-      {
-        id: 2,
-        label: "Landscape",
-        image:
-          "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400&h=400&fit=crop",
-        votes: 195,
-        percent: 32,
-      },
-      {
-        id: 3,
-        label: "Street",
-        image:
-          "https://images.unsplash.com/photo-1506086679524-493c64fdfaa6?w=400&h=400&fit=crop",
-        votes: 125,
-        percent: 21,
-      },
-    ],
-    likes: 189,
-    comments: 52,
-  };
+  // Allow external triggers (Home button/logo) to reset feed without a full reload
+  useEffect(() => {
+    const resetFeed = () => {
+      if (!socketReady || !socketRef.current) return;
+      setPolls([]);
+      setHasMore(true);
+      setHasReceivedData(false);
+      setIsLoading(true);
+      setOffset(0);
+      socketRef.current.sendGetFeed({ limit, offset: 0 });
+      socketRef.current.sendGetTrending({ hours: 24, limit: 10 });
+      socketRef.current.sendGetMyDrafts({ limit: 20, offset: 0 });
+      setOffset(limit);
+    };
 
-  const pollWithMultiImageData3 = {
-    user: {
-      name: "Mia Wilson",
-      avatar: "https://randomuser.me/api/portraits/women/15.jpg",
-      timeAgo: "6 hours ago",
-    },
-    question: "Which UI theme would you install on your phone?",
-    options: [
-      {
-        id: 1,
-        label: "Neon Dark",
-        image:
-          "https://images.unsplash.com/photo-1516357231954-91487b459602?w=400&h=400&fit=crop",
-        votes: 180,
-        percent: 20,
-      },
-      {
-        id: 2,
-        label: "Pastel Light",
-        image:
-          "https://images.unsplash.com/photo-1526498460520-4c246339dccb?w=400&h=400&fit=crop",
-        votes: 160,
-        percent: 18,
-      },
-      {
-        id: 3,
-        label: "Glassmorphism",
-        image:
-          "https://images.unsplash.com/photo-1510511459019-5dda7724fd87?w=400&h=400&fit=crop",
-        votes: 210,
-        percent: 24,
-      },
-      {
-        id: 4,
-        label: "Material You",
-        image:
-          "https://images.unsplash.com/photo-1471879832106-c7ab9e0cee23?w=400&h=400&fit=crop",
-        votes: 140,
-        percent: 16,
-      },
-      {
-        id: 5,
-        label: "Monochrome",
-        image:
-          "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=400&fit=crop",
-        votes: 120,
-        percent: 14,
-      },
-      {
-        id: 6,
-        label: "Gradient",
-        image:
-          "https://images.unsplash.com/photo-1517697471339-4aa32003c11a?w=400&h=400&fit=crop",
-        votes: 80,
-        percent: 8,
-      },
-    ],
-    likes: 301,
-    comments: 97,
-  };
-
-  const pollWithMultiImageData4 = {
-    user: {
-      name: "Ethan Lee",
-      avatar: "https://randomuser.me/api/portraits/men/29.jpg",
-      timeAgo: "2 days ago",
-    },
-    question: "Choose the best marketing campaign visual.",
-    options: [
-      {
-        id: 1,
-        label: "Urban Lifestyle",
-        image:
-          "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=400&fit=crop",
-        votes: 130,
-        percent: 13,
-      },
-      {
-        id: 2,
-        label: "Nature Escape",
-        image:
-          "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=400&fit=crop",
-        votes: 150,
-        percent: 15,
-      },
-      {
-        id: 3,
-        label: "Fitness Focus",
-        image:
-          "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=400&fit=crop",
-        votes: 160,
-        percent: 16,
-      },
-      {
-        id: 4,
-        label: "Cozy Home",
-        image:
-          "https://images.unsplash.com/photo-1484100356142-db6ab6244067?w=400&h=400&fit=crop",
-        votes: 140,
-        percent: 14,
-      },
-      {
-        id: 5,
-        label: "Healthy Food",
-        image:
-          "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop",
-        votes: 120,
-        percent: 12,
-      },
-      {
-        id: 6,
-        label: "Tech Future",
-        image:
-          "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop",
-        votes: 110,
-        percent: 11,
-      },
-
-      {
-        id: 8,
-        label: "Luxury Fashion",
-        image:
-          "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop",
-        votes: 80,
-        percent: 8,
-      },
-      {
-        id: 9,
-        label: "Minimal Product",
-        image:
-          "https://images.unsplash.com/photo-1526498460520-4c246339dccb?w=400&h=400&fit=crop",
-        votes: 70,
-        percent: 7,
-      },
-      {
-        id: 10,
-        label: "Abstract Art",
-        image:
-          "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=400&fit=crop",
-        votes: 50,
-        percent: 5,
-      },
-    ],
-    likes: 412,
-    comments: 133,
-  };
-
-  // Create array of all polls with their component types
-  const allPolls = [
-    { data: pollData1, type: "normal", id: 1 },
-    { data: pollData2, type: "normal", id: 2 },
-    { data: pollWithImageData, type: "withImage", id: 3 },
-    { data: pollWithMultiImageData, type: "multiImage", id: 4 },
-    { data: pollData3, type: "normal", id: 5 },
-    { data: pollData4, type: "normal", id: 6 },
-    { data: pollData5, type: "normal", id: 7 },
-    { data: pollWithImageData2, type: "withImage", id: 8 },
-    { data: pollWithImageData3, type: "withImage", id: 9 },
-    { data: pollWithMultiImageData2, type: "multiImage", id: 10 },
-    { data: pollWithMultiImageData3, type: "multiImage", id: 11 },
-    { data: pollWithMultiImageData4, type: "multiImage", id: 12 },
-  ];
-
-  // Sort to show "Poll of the day" first
-  const sortedPolls = allPolls.sort((a, b) => {
-    if (a.data.Polloftheday && !b.data.Polloftheday) return -1;
-    if (!a.data.Polloftheday && b.data.Polloftheday) return 1;
-    return 0;
-  });
+    const handler = () => resetFeed();
+    window.addEventListener("resetHomeFeed", handler);
+    return () => window.removeEventListener("resetHomeFeed", handler);
+  }, [socketReady]);
 
   return (
     <div className="min-h-screen  ">
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 ">
-        <Header />
+        <Header onSearch={handleSearch} />
       </div>
 
       <div className=" mx-auto px-4 sm:px-6 lg:px-16 mt-6 max-w-[1536px] mx-auto">
@@ -471,7 +335,10 @@ const Home = () => {
           {/* Sidebar - Sticky */}
           <div className="col-span-12 lg:col-span-2">
             <div className="sticky top-24">
-              <Sidebar />
+              <Sidebar
+                savedDrafts={savedDrafts}
+                onSelectSavedDraft={viewSavedDraft}
+              />
             </div>
           </div>
 
@@ -507,27 +374,52 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Dynamically render sorted polls */}
-            {sortedPolls.map((poll) => {
-              if (poll.type === "normal") {
-                return <PollCard key={poll.id} pollData={poll.data} />;
-              } else if (poll.type === "withImage") {
-                return (
-                  <PollCardWithOneImage key={poll.id} pollData={poll.data} />
-                );
-              } else if (poll.type === "multiImage") {
-                return (
-                  <PollCardwithMultiImage key={poll.id} pollData={poll.data} />
-                );
-              }
-              return null;
+            {/* Dynamically render polls from feed */}
+            {polls.map((poll, idx) => {
+              const type = poll.poll_type || poll.type;
+              const key = poll.id || idx;
+
+              return (
+                <div key={key} data-poll-index={idx}>
+                  {type === "single_image" ? (
+                    <PollCardWithOneImage pollData={poll} />
+                  ) : type === "multiple_images" ? (
+                    <PollCardwithMultiImage pollData={poll} />
+                  ) : (
+                    <PollCard pollData={poll} />
+                  )}
+                </div>
+              );
             })}
+
+            {isLoading && (
+              <div className="text-center text-sm text-gray-500">
+                Loading polls...
+              </div>
+            )}
+
+            {feedError && (
+              <div className="text-center text-sm text-red-500">
+                {feedError}
+              </div>
+            )}
+
+            {!isLoading && hasReceivedData && polls.length === 0 && (
+              <div className="text-center text-sm text-gray-500">
+                No polls available.
+              </div>
+            )}
           </div>
 
           {/* Right bar - Sticky */}
           <div className="col-span-12 lg:col-span-3 pb-20 md:pb-0">
             <div className="sticky top-24">
-              <RightBar />
+              <RightBar
+                pollOfTheDay={pollOfTheDay}
+                onViewPollOfTheDay={viewPollOfTheDay}
+                trendingPolls={trendingPolls}
+                onSelectTrendingPoll={viewTrendingPoll}
+              />
             </div>
           </div>
         </div>

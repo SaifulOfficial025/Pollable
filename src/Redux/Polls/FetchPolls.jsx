@@ -1,0 +1,147 @@
+import { API_BASE_URL } from "../Config";
+
+const getStoredAccessToken = () => {
+  const token = localStorage.getItem("accessToken");
+  if (token) return token;
+
+  const sessionToken = sessionStorage.getItem("accessToken");
+  if (sessionToken) return sessionToken;
+
+  const authResponseRaw = localStorage.getItem("authResponse");
+  if (!authResponseRaw) return "";
+
+  try {
+    const parsed = JSON.parse(authResponseRaw);
+    return parsed?.data?.access || "";
+  } catch {
+    return "";
+  }
+};
+
+export const POLLS_WS_URL = "ws://10.10.13.95:8500/ws/polls/";
+
+export function createPollsSocket({
+  onMessage,
+  onError,
+  onOpen,
+  onClose,
+} = {}) {
+  const token = getStoredAccessToken();
+  if (!token) {
+    throw new Error("No access token found. Please sign in again.");
+  }
+
+  const socket = new WebSocket(`${POLLS_WS_URL}?token=${token}`);
+  const pending = [];
+
+  const flush = () => {
+    while (pending.length && socket.readyState === WebSocket.OPEN) {
+      const payload = pending.shift();
+      socket.send(payload);
+    }
+  };
+
+  socket.onopen = () => {
+    flush();
+    onOpen?.();
+  };
+
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      onMessage?.(data);
+    } catch (err) {
+      // ignore malformed messages
+    }
+  };
+
+  socket.onerror = (event) => {
+    onError?.(event);
+  };
+
+  socket.onclose = () => {
+    onClose?.();
+  };
+
+  const safeSend = (obj) => {
+    const payload = JSON.stringify(obj);
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(payload);
+    } else if (socket.readyState === WebSocket.CONNECTING) {
+      pending.push(payload);
+    }
+  };
+
+  return {
+    socket,
+    sendGetFeed: ({ limit = 10, offset = 0 } = {}) =>
+      safeSend({ action: "get_feed", limit, offset }),
+    sendSearchPolls: ({ query = "", limit = 20, offset = 0 } = {}) =>
+      safeSend({ action: "search_polls", query, limit, offset }),
+    sendGetTrending: ({ hours = 24, limit = 10 } = {}) =>
+      safeSend({ action: "get_trending", hours, limit }),
+    sendGetMyDrafts: ({ limit = 20, offset = 0 } = {}) =>
+      safeSend({ action: "get_my_drafts", limit, offset }),
+    close: () => socket.close(),
+  };
+}
+
+export const normalizePoll = (poll) => {
+  if (!poll) return null;
+
+  const pollType = poll.poll_type || poll.type || "text_only";
+
+  const toAbsolute = (url) =>
+    url && typeof url === "string"
+      ? url.startsWith("http")
+        ? url
+        : `${API_BASE_URL}${url}`
+      : url;
+
+  const user = poll.user || {};
+  const userName =
+    user.name || user.username || poll.user_username || poll.username || "User";
+  const avatarRaw =
+    user.image_full_url ||
+    poll.user_image_full_url ||
+    user.image ||
+    user.avatar ||
+    poll.user_image ||
+    "";
+  const avatar = avatarRaw ? toAbsolute(avatarRaw) : "/dummyavatar.jpg";
+
+  const baseOptions = Array.isArray(poll.options) ? poll.options : [];
+
+  const mapOption = (opt) => ({
+    label:
+      opt?.label || opt?.title || opt?.option_text || opt?.text || "Option",
+    votes: opt?.votes ?? opt?.vote_count ?? 0,
+    percent: opt?.percent ?? opt?.percentage ?? 0,
+    image: toAbsolute(opt?.image_full_url || opt?.image || ""),
+    id: opt?.id || opt?.option_id || opt?.label || Math.random().toString(36),
+  });
+
+  return {
+    id: poll.id || poll.poll_id || Math.random().toString(36),
+    poll_type: pollType,
+    question: poll.question || poll.title || poll.name || "",
+    bannerImage: toAbsolute(
+      poll.banner_image_full_url ||
+        poll.image_full_url ||
+        poll.banner_image ||
+        poll.image ||
+        "",
+    ),
+    options: baseOptions.map(mapOption),
+    likes: poll.likes || poll.react_count || 0,
+    comments: poll.comments || poll.comment_count || 0,
+    voteTotal: poll.vote_count || poll.total_votes || 0,
+    Polloftheday: Boolean(poll.Polloftheday || poll.poll_of_the_day),
+    isOwner: Boolean(poll.is_owner),
+    user: {
+      name: userName,
+      avatar,
+      timeAgo: poll.timeAgo || poll.created_at || "Just now",
+    },
+  };
+};

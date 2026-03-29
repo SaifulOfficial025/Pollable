@@ -7,14 +7,22 @@ import { FaRegBookmark } from "react-icons/fa6";
 import { FiMessageCircle, FiCreditCard } from "react-icons/fi";
 import { Link, useLocation } from "react-router-dom";
 
-function Sidebar() {
+function Sidebar({ savedDrafts = [], onSelectSavedDraft }) {
   const location = useLocation();
   return (
     <>
       {/* Desktop / tablet sidebar */}
       <aside className="w-full hidden md:block">
         <nav className="flex flex-col">
-          <Link to="/">
+          <Link
+            to="/"
+            onClick={(e) => {
+              if (location.pathname === "/") {
+                e.preventDefault();
+                window.dispatchEvent(new CustomEvent("resetHomeFeed"));
+              }
+            }}
+          >
             <button
               className={`flex items-center gap-3 w-full px-4 py-3 rounded-md ${
                 location.pathname === "/"
@@ -124,6 +132,37 @@ function Sidebar() {
           </div>
 
           <div className="mt-5 border-t pt-4">
+            {/* <div className="px-3 pb-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                <FaRegBookmark className="text-base" />
+                <span>Saved Polls</span>
+              </div>
+              {savedDrafts.length ? (
+                <ul className="mt-2 space-y-2 text-sm text-gray-700 max-h-64 overflow-y-auto pr-1">
+                  {savedDrafts.map((poll, idx) => (
+                    <li key={poll.id || idx}>
+                      <button
+                        type="button"
+                        onClick={() => onSelectSavedDraft?.(poll)}
+                        className="w-full text-left px-2 py-2 rounded-md hover:bg-gray-50 transition"
+                      >
+                        <div className="font-medium line-clamp-2">
+                          {poll.question || "Untitled poll"}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {`${Number(poll.voteTotal || 0).toLocaleString()} votes`}
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="mt-2 text-xs text-gray-500">
+                  No saved polls yet.
+                </div>
+              )}
+            </div> */}
+
             <ul className="text-gray-700">
               <li className="px-3 py-2 flex items-center gap-3 rounded-md hover:bg-gray-50">
                 <FiCreditCard className="text-lg text-gray-700" />

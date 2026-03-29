@@ -15,11 +15,12 @@ import NotificationModal from "./NotificationModal";
 import { fetchProfile } from "../../Redux/Auth/Profile";
 import { API_BASE_URL } from "../../Redux/Config";
 
-function Header() {
+function Header({ onSearch }) {
   const [open, setOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const menuRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     function handleClick(e) {
@@ -88,7 +89,15 @@ function Header() {
     <header className="w-full bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-16 py-3 flex items-center gap-6">
         {/* Logo */}
-        <Link to="/">
+        <Link
+          to="/"
+          onClick={(e) => {
+            if (window.location.pathname === "/") {
+              e.preventDefault();
+              window.dispatchEvent(new CustomEvent("resetHomeFeed"));
+            }
+          }}
+        >
           <div className="flex-shrink-0">
             <img
               src="/logoicon.png"
@@ -114,6 +123,14 @@ function Header() {
                 type="text"
                 placeholder="Search polls, topics, or people..."
                 className="w-full rounded-full bg-gray-50 border border-gray-300 focus:border-gray-200 focus:ring-0 pl-11 pr-4 py-2 text-sm text-gray-600"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    onSearch?.(searchTerm);
+                  }
+                }}
               />
             </div>
           </div>
