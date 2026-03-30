@@ -1,19 +1,68 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Button from "../../Shared/Button";
+import { fetchPollDemographics } from "../../Redux/Polls/Demographics";
 
-function PollDemographicModal({ initialOpen = true, onClose }) {
+function PollDemographicModal({ pollId, initialOpen = true, onClose }) {
   const [open, setOpen] = useState(initialOpen);
   const [tab, setTab] = useState("Age");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [demographics, setDemographics] = useState({
+    total_votes: 0,
+    age: [],
+    gender: [],
+    ethnicity: [],
+  });
 
-  const ageData = [
-    { label: "Under 18", percent: 30, votes: 320 },
-    { label: "18-24", percent: 10, votes: 120 },
-    { label: "25-34", percent: 57, votes: 610 },
-    { label: "35-44", percent: 15, votes: 160 },
-    { label: "45-54", percent: 10, votes: 110 },
-    { label: "55-64", percent: 20, votes: 210 },
-    { label: "65+", percent: 10, votes: 100 },
-  ];
+  useEffect(() => {
+    if (!open || !pollId) return;
+
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const data = await fetchPollDemographics(pollId);
+        if (!cancelled) setDemographics(data);
+      } catch (err) {
+        if (!cancelled)
+          setError(err?.message || "Failed to load poll demographics.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, pollId]);
+
+  const tabKey = useMemo(
+    () => ({ Age: "age", Gender: "gender", Ethnicity: "ethnicity" }),
+    [],
+  );
+
+  const currentData = demographics[tabKey[tab]] || [];
+
+  const formatPercent = (value) => {
+    const num = Number(value) || 0;
+    return Math.min(100, Math.max(0, num)).toFixed(1);
+  };
+
+  const handleRetry = () => {
+    if (!pollId) return;
+    setOpen(true);
+    setError("");
+    setLoading(true);
+    fetchPollDemographics(pollId)
+      .then((data) => setDemographics(data))
+      .catch((err) =>
+        setError(err?.message || "Failed to load poll demographics."),
+      )
+      .finally(() => setLoading(false));
+  };
 
   function handleClose() {
     setOpen(false);
@@ -41,62 +90,86 @@ function PollDemographicModal({ initialOpen = true, onClose }) {
         </div>
 
         <div className="p-6">
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {["Age", "Gender", "Ethnicity"].map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-4 py-2 rounded-full text-sm font-medium ${tab === t ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white" : "bg-gray-100 text-gray-700"}`}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  tab === t
+                    ? "bg-gray-900 text-white shadow"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 {t}
               </button>
             ))}
           </div>
 
-          <div className="mt-6">
-            {tab === "Age" && (
-              <div>
-                <h4 className="text-sm font-semibold text-gray-800 mb-4">
-                  Age Distribution
-                </h4>
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <div className="font-semibold text-gray-800">
+                {tab} Distribution
+              </div>
+              <div className="px-2 py-1 rounded-full bg-gray-100 text-xs">
+                {demographics.total_votes.toLocaleString()} votes
+              </div>
+            </div>
 
-                <div className="space-y-4">
-                  {ageData.map((a) => (
-                    <div key={a.label} className="flex items-center gap-4">
-                      <div className="w-36 text-sm text-gray-600">
-                        {a.label}
-                      </div>
+            {loading && (
+              <div className="text-sm text-gray-500">
+                Loading demographics...
+              </div>
+            )}
 
-                      <div className="flex-1">
-                        <div className="w-full bg-blue-50 rounded-full h-3 relative">
-                          <div
-                            className="h-3 rounded-full bg-gradient-to-r from-[#4a90e2] to-[#7c3bed]"
-                            style={{ width: `${a.percent}%` }}
-                          />
-                        </div>
-                      </div>
+            {!loading && error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-center justify-between">
+                <span>{error}</span>
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="text-red-700 font-semibold underline"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
 
-                      <div className="w-20 text-right text-sm text-gray-500">
-                        <div>{a.percent}%</div>
-                        <div className="text-xs text-gray-400">
-                          {a.votes} votes
-                        </div>
-                      </div>
+            {!loading && !error && currentData.length === 0 && (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+                No data for this category yet.
+              </div>
+            )}
+
+            {!loading && !error && currentData.length > 0 && (
+              <div className="space-y-3">
+                {currentData.map((item) => (
+                  <div key={item.label} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-700 font-medium">
+                        {item.label}
+                      </span>
+                      <span className="text-gray-500">
+                        {formatPercent(item.percentage)}%
+                      </span>
                     </div>
-                  ))}
-                </div>
+                    <div className="h-3 rounded-full bg-gray-100 overflow-hidden">
+                      <div
+                        className="h-3 rounded-full bg-gradient-to-r from-[#4a90e2] to-[#7c3bed]"
+                        style={{ width: `${formatPercent(item.percentage)}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {item.count} votes
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
-            {tab !== "Age" && (
-              <div className="text-sm text-gray-600">
-                No data for {tab} in this demo.
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6">
-            <Button label="Close" onClick={handleClose} fullWidth />
+            <div className="pt-2">
+              <Button label="Close" onClick={handleClose} fullWidth />
+            </div>
           </div>
         </div>
       </div>

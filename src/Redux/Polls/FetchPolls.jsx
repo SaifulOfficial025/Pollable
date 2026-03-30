@@ -139,11 +139,22 @@ export const normalizePoll = (poll) => {
       : url;
 
   const user = poll.user || {};
+  const userInfo = poll.user_info || {};
+
   const userName =
-    user.name || user.username || poll.user_username || poll.username || "User";
+    user.name ||
+    user.username ||
+    userInfo.name ||
+    userInfo.username ||
+    poll.user_username ||
+    poll.username ||
+    "User";
+
   const avatarRaw =
     user.image_full_url ||
     poll.user_image_full_url ||
+    userInfo.profile_image_full_url ||
+    userInfo.profile_image ||
     user.image ||
     user.avatar ||
     poll.user_image ||
@@ -151,6 +162,13 @@ export const normalizePoll = (poll) => {
   const avatar = avatarRaw ? toAbsolute(avatarRaw) : "/dummyavatar.jpg";
 
   const baseOptions = Array.isArray(poll.options) ? poll.options : [];
+
+  const rawVotedOptionId =
+    poll.my_reaction?.voted_option_id ?? poll.my_reaction?.option_id ?? null;
+  const votedOptionId =
+    typeof rawVotedOptionId === "number" || typeof rawVotedOptionId === "string"
+      ? rawVotedOptionId
+      : null;
 
   const mapOption = (opt) => ({
     label:
@@ -174,10 +192,13 @@ export const normalizePoll = (poll) => {
     ),
     options: baseOptions.map(mapOption),
     likes: poll.likes || poll.react_count || 0,
+    isReacted: Boolean(poll.my_reaction?.is_reacted),
     comments: poll.comments || poll.comment_count || 0,
     voteTotal: poll.vote_count || poll.total_votes || 0,
     Polloftheday: Boolean(poll.Polloftheday || poll.poll_of_the_day),
     isOwner: Boolean(poll.is_owner),
+    hasVoted: Boolean(poll.my_reaction?.is_voted),
+    votedOptionId,
     user: {
       name: userName,
       avatar,

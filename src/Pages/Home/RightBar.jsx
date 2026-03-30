@@ -1,14 +1,129 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AiFillStar } from "react-icons/ai";
 import { IoMdTrendingUp } from "react-icons/io";
 import Button from "../../Shared/Button";
+import { createPollsSocket, normalizePoll } from "../../Redux/Polls/FetchPolls";
 
 function RightBar({
   pollOfTheDay,
   onViewPollOfTheDay,
-  trendingPolls = [],
+  trendingPolls,
   onSelectTrendingPoll,
 }) {
+  const [fallbackPollOfTheDay, setFallbackPollOfTheDay] = useState(null);
+  const [fallbackTrendingPolls, setFallbackTrendingPolls] = useState([]);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+
+  const shouldUseFallback =
+    pollOfTheDay === undefined && trendingPolls === undefined;
+
+  useEffect(() => {
+    if (!shouldUseFallback) return;
+
+    let closed = false;
+    let socketInstance;
+
+    try {
+      socketInstance = createPollsSocket({
+        onOpen: () => {
+          setFallbackLoading(true);
+          socketInstance.sendGetTrending({ hours: 24, limit: 10 });
+          socketInstance.sendGetFeed({ limit: 10, offset: 0 });
+        },
+        onMessage: (payload) => {
+          if (closed) return;
+
+          if (payload?.type === "poll_of_the_day") {
+            const pod = normalizePoll(payload?.data?.poll || payload?.data);
+            if (pod) setFallbackPollOfTheDay(pod);
+            setFallbackLoading(false);
+            return;
+          }
+
+          const trendingIndicators = [
+            payload?.action,
+            payload?.type,
+            payload?.event,
+            payload?.data?.action,
+            payload?.data?.type,
+            payload?.data?.event,
+          ];
+
+          const isTrending =
+            trendingIndicators.some(
+              (flag) =>
+                typeof flag === "string" &&
+                flag.toLowerCase().includes("trending"),
+            ) ||
+            Array.isArray(payload?.data?.trending_polls) ||
+            Array.isArray(payload?.trending_polls);
+
+          if (isTrending) {
+            const trendingCandidates = [
+              payload?.data?.trending_polls,
+              payload?.trending_polls,
+              payload?.data?.results,
+              payload?.data?.polls,
+              payload?.results,
+              payload?.polls,
+              payload?.data,
+            ];
+            const rawTrending =
+              trendingCandidates.find((c) => Array.isArray(c)) || [];
+            const normalizedTrending = rawTrending
+              .map((p) => normalizePoll(p))
+              .filter(Boolean);
+            setFallbackTrendingPolls(normalizedTrending);
+            setFallbackLoading(false);
+            return;
+          }
+
+          const feedCandidates = [
+            payload?.data?.results,
+            payload?.data?.polls,
+            payload?.results,
+            payload?.polls,
+            payload?.data,
+          ];
+          const rawFeed = feedCandidates.find((c) => Array.isArray(c)) || [];
+          if (rawFeed.length) {
+            const normalizedFeed = rawFeed
+              .map((p) => normalizePoll(p))
+              .filter(Boolean);
+            const podFromFeed = normalizedFeed.find(
+              (p) =>
+                p?.is_poll_of_the_day || p?.poll_of_the_day || p?.Polloftheday,
+            );
+            if (podFromFeed) setFallbackPollOfTheDay(podFromFeed);
+            setFallbackLoading(false);
+          }
+        },
+        onError: () => {
+          if (!closed) setFallbackLoading(false);
+        },
+        onClose: () => {
+          if (!closed) setFallbackLoading(false);
+        },
+      });
+    } catch {
+      setFallbackLoading(false);
+    }
+
+    return () => {
+      closed = true;
+      socketInstance?.close?.();
+    };
+  }, [shouldUseFallback]);
+
+  const activePollOfTheDay = shouldUseFallback
+    ? fallbackPollOfTheDay
+    : pollOfTheDay;
+
+  const activeTrendingPolls = useMemo(() => {
+    if (shouldUseFallback) return fallbackTrendingPolls;
+    return Array.isArray(trendingPolls) ? trendingPolls : [];
+  }, [shouldUseFallback, fallbackTrendingPolls, trendingPolls]);
+
   return (
     <aside className="hidden md:block w-full space-y-4">
       {/* Poll of the Day */}
@@ -23,17 +138,20 @@ function RightBar({
         </div>
 
         <div className="mt-3  rounded-lg p-3">
-          <p className="text-md font-semibold text-black font-medium line-clamp-3">
-            {pollOfTheDay?.question || "Poll coming soon"}
+          <p className="text-md font-semibold text-black line-clamp-3">
+            {activePollOfTheDay?.question ||
+              (fallbackLoading ? "Loading poll..." : "Poll coming soon")}
           </p>
 
           <div className="mt-3 flex items-center justify-between">
             <div className="text-xs text-gray-500">
-              {pollOfTheDay ? `${pollOfTheDay.voteTotal || 0} votes` : ""}
+              {activePollOfTheDay
+                ? `${activePollOfTheDay.voteTotal || 0} votes`
+                : ""}
             </div>
             <Button
               size="md"
-              disabled={!pollOfTheDay}
+              disabled={!activePollOfTheDay || !onViewPollOfTheDay}
               onClick={onViewPollOfTheDay}
             >
               View Poll
@@ -50,9 +168,9 @@ function RightBar({
             Trending Polls
           </h4>
         </div>
-        {trendingPolls.length ? (
+        {activeTrendingPolls.length ? (
           <ul className="mt-3 space-y-3 text-sm text-black max-h-80 overflow-y-auto pr-1">
-            {trendingPolls.map((poll, idx) => {
+            {activeTrendingPolls.map((poll, idx) => {
               const votesLabel = `${Number(poll.voteTotal || 0).toLocaleString()} votes`;
               const borderClass = idx === 0 ? "" : "border-t pt-3";
 
