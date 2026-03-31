@@ -1,64 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Button from "../../Shared/Button";
-import { fetchProfile } from "../../Redux/Auth/Profile";
 import { API_BASE_URL } from "../../Redux/Config";
 
-function UserCard() {
-  const [profile, setProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const loadProfile = async () => {
-      setIsLoading(true);
-      setError("");
-
-      const token =
-        localStorage.getItem("accessToken") ||
-        sessionStorage.getItem("accessToken");
-      const cached = localStorage.getItem("profileData");
-
-      if (!token && cached) {
-        try {
-          setProfile(JSON.parse(cached));
-        } catch {
-          setProfile(null);
-        }
-        setIsLoading(false);
-        return;
-      }
-
-      if (!token && !cached) {
-        setError("Please sign in to view profile.");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetchProfile();
-        const data = response?.data || null;
-        if (data) {
-          setProfile(data);
-          localStorage.setItem("profileData", JSON.stringify(data));
-        } else if (cached) {
-          setProfile(JSON.parse(cached));
-        }
-      } catch (err) {
-        if (cached) {
-          try {
-            setProfile(JSON.parse(cached));
-          } catch {
-            setProfile(null);
-          }
-        }
-        setError(err.message || "Unable to load profile.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadProfile();
-  }, []);
+function UserCard({ profile, loading, error }) {
+  const isLoading = loading;
 
   if (isLoading) {
     return (
@@ -112,9 +57,11 @@ function UserCard() {
           </div>
         </div>
 
-        <div className="flex-shrink-0 mt-4 md:mt-0 md:self-start w-full md:w-auto flex justify-center md:justify-start">
-          <Button label="Follow" />
-        </div>
+        {!profile?.is_me && (
+          <div className="flex-shrink-0 mt-4 md:mt-0 md:self-start w-full md:w-auto flex justify-center md:justify-start">
+            <Button label="Follow" />
+          </div>
+        )}
       </div>
 
       <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col md:flex-row items-stretch md:items-center justify-between text-center gap-4 md:gap-0">

@@ -27,7 +27,7 @@ export const router = createBrowserRouter([
         element: <SettingsHome />,
       },
       {
-        path: "/user/",
+        path: "/user/:username?",
         element: <UserProfile />,
       },
       {
@@ -69,7 +69,7 @@ export const router = createBrowserRouter([
       {
         path: "forget-password-email",
         element: <ForgetPasswordEmail />,
-      }
+      },
     ],
   },
 ]);

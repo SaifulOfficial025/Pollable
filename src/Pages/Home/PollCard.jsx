@@ -99,6 +99,21 @@ function PollCard({ pollData }) {
     return fixed.replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
   };
 
+  const profileUsername =
+    user?.username || pollData?.username || pollData?.user_username || "";
+  const profileUserId =
+    user?.id ||
+    pollData?.userId ||
+    pollData?.user_id ||
+    pollData?.user?.user_id ||
+    null;
+  const profileQuery = profileUserId
+    ? `?user_id=${encodeURIComponent(profileUserId)}`
+    : "";
+  const profilePath = profileUsername
+    ? `/user/${encodeURIComponent(profileUsername)}${profileQuery}`
+    : `/user${profileQuery}`;
+
   useEffect(() => {
     setLocalVoteTotal(voteTotalFromData);
     setLocalOptions(recomputePercents(options, voteTotalFromData));
@@ -237,7 +252,7 @@ function PollCard({ pollData }) {
       >
         {/* Header */}
         <div className="flex items-start justify-between">
-          <Link to="/user/">
+          <Link to={profilePath}>
             <div className="flex items-center gap-3">
               <img
                 src={user.avatar}

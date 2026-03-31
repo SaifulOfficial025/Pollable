@@ -1,17 +1,16 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import PollCard from "./PollCard";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import RightBar from "./RightBar";
 import PollCardWithOneImage from "./PollCardWithOneImage";
 import PollCardwithMultiImage from "./PollCardwithMultiImage";
-import { createPollsSocket, normalizePoll } from "../../Redux/Polls/FetchPolls";
+import { fetchSavedPolls } from "../../Redux/Polls/SavedPolls";
 
 function SavedPoll() {
   const [savedDrafts, setSavedDrafts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const socketRef = useRef(null);
 
   const viewSavedDraft = (poll) => {
     if (!poll) return;
@@ -19,72 +18,24 @@ function SavedPoll() {
   };
 
   useEffect(() => {
-    let closed = false;
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
+      setError("");
+      try {
+        const data = await fetchSavedPolls();
+        if (!cancelled) setSavedDrafts(data);
+      } catch (err) {
+        if (!cancelled) setError(err?.message || "Unable to load saved polls.");
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
 
-    try {
-      const socketInstance = createPollsSocket({
-        onOpen: () => {
-          setError("");
-          setIsLoading(true);
-          socketInstance.sendGetMyDrafts({ limit: 20, offset: 0 });
-        },
-        onMessage: (payload) => {
-          setIsLoading(false);
-          setError("");
-
-          const draftsIndicators = [
-            payload?.action,
-            payload?.type,
-            payload?.event,
-            payload?.data?.action,
-            payload?.data?.type,
-            payload?.data?.event,
-          ];
-
-          const isDrafts =
-            draftsIndicators.some(
-              (flag) =>
-                typeof flag === "string" &&
-                flag.toLowerCase().includes("draft"),
-            ) ||
-            Array.isArray(payload?.data?.drafts) ||
-            Array.isArray(payload?.drafts);
-
-          if (!isDrafts) return;
-
-          const draftCandidates = [
-            payload?.data?.drafts,
-            payload?.drafts,
-            payload?.data?.results,
-            payload?.data?.polls,
-            payload?.results,
-            payload?.polls,
-            payload?.data,
-          ];
-
-          const rawDrafts = draftCandidates.find((c) => Array.isArray(c)) || [];
-          const normalized = rawDrafts
-            .map((p) => normalizePoll(p))
-            .filter(Boolean);
-          setSavedDrafts(normalized);
-        },
-        onError: () => {
-          setIsLoading(false);
-          setError("Unable to load saved polls.");
-        },
-        onClose: () => {
-          if (!closed) setIsLoading(false);
-        },
-      });
-
-      socketRef.current = socketInstance;
-    } catch (err) {
-      setError("Unable to connect. Please sign in again.");
-    }
+    load();
 
     return () => {
-      closed = true;
-      socketRef.current?.close?.();
+      cancelled = true;
     };
   }, []);
   return (

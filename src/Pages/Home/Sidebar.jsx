@@ -9,6 +9,8 @@ import { Link, useLocation } from "react-router-dom";
 
 function Sidebar({ savedDrafts = [], onSelectSavedDraft }) {
   const location = useLocation();
+  const isMyProfileRoute =
+    location.pathname === "/user" || location.pathname === "/user/";
   return (
     <>
       {/* Desktop / tablet sidebar */}
@@ -55,23 +57,15 @@ function Sidebar({ savedDrafts = [], onSelectSavedDraft }) {
             <Link to="/user">
               <button
                 className={`flex items-center gap-3 w-full px-3 py-2 rounded-md ${
-                  location.pathname === "/user" ||
-                  location.pathname === "/user/"
+                  isMyProfileRoute
                     ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white"
                     : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <CgProfile
-                  className={`text-xl ${location.pathname === "/user" || location.pathname === "/user/" ? "text-white" : "text-gray-700"}`}
+                  className={`text-xl ${isMyProfileRoute ? "text-white" : "text-gray-700"}`}
                 />
-                <span
-                  className={
-                    location.pathname === "/user" ||
-                    location.pathname === "/user/"
-                      ? "font-semibold"
-                      : ""
-                  }
-                >
+                <span className={isMyProfileRoute ? "font-semibold" : ""}>
                   My Profile
                 </span>
               </button>
@@ -213,10 +207,7 @@ function Sidebar({ savedDrafts = [], onSelectSavedDraft }) {
             <Link to="/user">
               <button
                 className={`p-2 rounded-full ${
-                  location.pathname === "/user" ||
-                  location.pathname === "/user/"
-                    ? "text-[#4a90e2]"
-                    : "text-gray-600"
+                  isMyProfileRoute ? "text-[#4a90e2]" : "text-gray-600"
                 }`}
                 aria-label="My Profile"
               >

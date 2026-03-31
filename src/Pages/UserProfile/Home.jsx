@@ -1,41 +1,192 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import UserCard from "./UserCard";
 import PollCard from "../Home/PollCard";
-import Button from "../../Shared/Button";
+import PollCardWithOneImage from "../Home/PollCardWithOneImage";
+import PollCardwithMultiImage from "../Home/PollCardwithMultiImage";
 import Header from "../Home/Header";
 import Sidebar from "../Home/Sidebar";
 import RightBar from "../Home/RightBar";
+import { API_BASE_URL } from "../../Redux/Config";
+import {
+  fetchFollowers,
+  fetchFollowing,
+  fetchUserPolls,
+  fetchUserProfile,
+} from "../../Redux/Profile";
 
 function Home() {
   const [tab, setTab] = useState("polls");
+  const [searchParams] = useSearchParams();
+  const userIdParam = searchParams.get("user_id") || null;
 
-  const people = [
-    {
-      id: 1,
-      name: "Jubayer Ahmad",
-      handle: "@ahmadjubayerr",
-      avatar: "/dummyavatar.jpg",
-    },
-    { id: 2, name: "Sara Lee", handle: "@saralee", avatar: "/dummyavatar.jpg" },
-    {
-      id: 3,
-      name: "Michael Chen",
-      handle: "@michaelc",
-      avatar: "/dummyavatar.jpg",
-    },
-    {
-      id: 4,
-      name: "Emily Rodriguez",
-      handle: "@emilyr",
-      avatar: "/dummyavatar.jpg",
-    },
-  ];
+  const [profile, setProfile] = useState(null);
+  const [polls, setPolls] = useState([]);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [following, setFollowing] = useState({});
+  useEffect(() => {
+    let cancelled = false;
 
-  function toggleFollow(id) {
-    setFollowing((s) => ({ ...s, [id]: !s[id] }));
-  }
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const profileData = await fetchUserProfile(userIdParam || undefined);
+        if (cancelled) return;
+        setProfile(profileData);
+
+        const targetId = profileData?.id || userIdParam;
+        if (!targetId) throw new Error("Missing user id.");
+
+        const [pollData, followerData, followingData] = await Promise.all([
+          fetchUserPolls(targetId).catch(() => []),
+          fetchFollowers(targetId).catch(() => []),
+          fetchFollowing(targetId).catch(() => []),
+        ]);
+
+        if (cancelled) return;
+        setPolls(pollData);
+        setFollowers(followerData);
+        setFollowing(followingData);
+      } catch (err) {
+        if (!cancelled) setError(err?.message || "Unable to load profile.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [userIdParam]);
+
+  const pollsContent = useMemo(() => {
+    if (loading) {
+      return <div className="text-sm text-gray-500">Loading polls...</div>;
+    }
+    if (error) {
+      return <div className="text-sm text-red-500">{error}</div>;
+    }
+    if (!polls.length) {
+      return <div className="text-sm text-gray-500">No polls yet.</div>;
+    }
+
+    return polls.map((poll, idx) => {
+      const type = poll.poll_type || poll.type;
+      const key = poll.id || idx;
+      if (type === "single_image")
+        return <PollCardWithOneImage pollData={poll} key={key} />;
+      if (type === "multiple_images")
+        return <PollCardwithMultiImage pollData={poll} key={key} />;
+      return <PollCard pollData={poll} key={key} />;
+    });
+  }, [loading, error, polls]);
+
+  const followerList = useMemo(() => {
+    if (loading)
+      return <div className="text-sm text-gray-500">Loading followers...</div>;
+    if (error) return <div className="text-sm text-red-500">{error}</div>;
+    if (!followers.length)
+      return <div className="text-sm text-gray-500">No followers yet.</div>;
+    return (
+      <ul className="space-y-4">
+        {followers.map((p) => {
+          const profilePath = p.username
+            ? `/user/${encodeURIComponent(p.username)}`
+            : p.id
+              ? `/user/?user_id=${encodeURIComponent(p.id)}`
+              : "/user/";
+          return (
+            <li
+              key={p.id || p.username || Math.random()}
+              className="flex items-center justify-between"
+            >
+              <Link
+                to={profilePath}
+                className="flex items-center gap-4 hover:bg-gray-50 rounded-lg px-2 py-1 w-full"
+              >
+                <img
+                  src={
+                    p.image
+                      ? p.image.startsWith("http")
+                        ? p.image
+                        : `${API_BASE_URL}/${p.image}`
+                      : "/dummyavatar.jpg"
+                  }
+                  alt={p.name || p.username || "User"}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div>
+                  <div className="text-sm font-semibold text-gray-800">
+                    {p.name || p.username || "User"}
+                  </div>
+                  {p.username && (
+                    <div className="text-xs text-gray-500">@{p.username}</div>
+                  )}
+                </div>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }, [loading, error, followers]);
+
+  const followingList = useMemo(() => {
+    if (loading)
+      return <div className="text-sm text-gray-500">Loading following...</div>;
+    if (error) return <div className="text-sm text-red-500">{error}</div>;
+    if (!following.length)
+      return (
+        <div className="text-sm text-gray-500">Not following anyone yet.</div>
+      );
+    return (
+      <ul className="space-y-4">
+        {following.map((p) => {
+          const profilePath = p.username
+            ? `/user/${encodeURIComponent(p.username)}`
+            : p.id
+              ? `/user/?user_id=${encodeURIComponent(p.id)}`
+              : "/user/";
+          return (
+            <li
+              key={p.id || p.username || Math.random()}
+              className="flex items-center justify-between"
+            >
+              <Link
+                to={profilePath}
+                className="flex items-center gap-4 hover:bg-gray-50 rounded-lg px-2 py-1 w-full"
+              >
+                <img
+                  src={
+                    p.image
+                      ? p.image.startsWith("http")
+                        ? p.image
+                        : `${API_BASE_URL}/${p.image}`
+                      : "/dummyavatar.jpg"
+                  }
+                  alt={p.name || p.username || "User"}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div>
+                  <div className="text-sm font-semibold text-gray-800">
+                    {p.name || p.username || "User"}
+                  </div>
+                  {p.username && (
+                    <div className="text-xs text-gray-500">@{p.username}</div>
+                  )}
+                </div>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }, [loading, error, following]);
 
   return (
     <div className="min-h-screen">
@@ -55,7 +206,7 @@ function Home() {
 
           {/* Main content - Scrollable */}
           <div className="col-span-12 lg:col-span-7 pb-24 md:pb-16">
-            <UserCard />
+            <UserCard profile={profile} loading={loading} error={error} />
 
             <div className="mt-6 bg-white rounded-lg border border-gray-100 p-4">
               <div className="flex items-center gap-6">
@@ -93,47 +244,17 @@ function Home() {
             </div>
 
             <div className="mt-6 space-y-6">
-              {tab === "polls" && (
-                <>
-                  <PollCard />
-                  <PollCard />
-                  <PollCard />
-                </>
+              {tab === "polls" && pollsContent}
+
+              {tab === "followers" && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  {followerList}
+                </div>
               )}
 
-              {(tab === "followers" || tab === "following") && (
+              {tab === "following" && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                  <ul className="space-y-4">
-                    {people.map((p) => (
-                      <li
-                        key={p.id}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-4">
-                          <img
-                            src={p.avatar}
-                            alt={p.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                          <div>
-                            <div className="text-sm font-semibold text-gray-800">
-                              {p.name}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {p.handle}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Button
-                            label={following[p.id] ? "Following" : "Follow"}
-                            onClick={() => toggleFollow(p.id)}
-                          />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  {followingList}
                 </div>
               )}
             </div>

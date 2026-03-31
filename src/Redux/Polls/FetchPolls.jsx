@@ -141,10 +141,28 @@ export const normalizePoll = (poll) => {
   const user = poll.user || {};
   const userInfo = poll.user_info || {};
 
+  const userId =
+    user.id ||
+    user.user_id ||
+    userInfo.id ||
+    userInfo.user_id ||
+    poll.user_id ||
+    poll.userId ||
+    null;
+
+  const userUsername =
+    user.username ||
+    userInfo.username ||
+    poll.user_username ||
+    poll.username ||
+    null;
+
   const userName =
     user.name ||
-    user.username ||
     userInfo.name ||
+    poll.user_name ||
+    poll.name ||
+    userUsername ||
     userInfo.username ||
     poll.user_username ||
     poll.username ||
@@ -199,7 +217,12 @@ export const normalizePoll = (poll) => {
     isOwner: Boolean(poll.is_owner),
     hasVoted: Boolean(poll.my_reaction?.is_voted),
     votedOptionId,
+    userId: userId ?? null,
+    user_id: userId ?? null,
+    username: userUsername || "",
     user: {
+      id: userId ?? null,
+      username: userUsername || "",
       name: userName,
       avatar,
       timeAgo: formatRelativeTime(

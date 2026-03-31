@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchComments, createComment } from "../../Redux/Polls/Comment";
+import { API_BASE_URL } from "../../Redux/Config";
 
 function CommentModal({ initialOpen = true, onClose, pollId, onCommentAdded }) {
   const [open, setOpen] = useState(initialOpen);
@@ -122,6 +124,24 @@ function CommentModal({ initialOpen = true, onClose, pollId, onCommentAdded }) {
     }
   };
 
+  const toAbsolute = (url) => {
+    if (!url) return "";
+    if (typeof url !== "string") return "";
+    if (url.startsWith("http")) return url;
+    return `${API_BASE_URL}${url}`;
+  };
+
+  const getProfilePath = (userInfo = {}) => {
+    const username = userInfo.username;
+    const userId = userInfo.id;
+    if (username && userId) {
+      return `/user/${encodeURIComponent(username)}?user_id=${encodeURIComponent(userId)}`;
+    }
+    if (username) return `/user/${encodeURIComponent(username)}`;
+    if (userId) return `/user/?user_id=${encodeURIComponent(userId)}`;
+    return "/user/";
+  };
+
   if (!open) return null;
 
   return (
@@ -162,16 +182,27 @@ function CommentModal({ initialOpen = true, onClose, pollId, onCommentAdded }) {
                   key={node.id}
                   className={`flex items-start gap-3 ${depth > 0 ? "mt-3" : ""}`}
                 >
-                  <img
-                    src="/dummyavatar.jpg"
-                    alt={node.user_username || "User"}
-                    className="w-9 h-9 rounded-full object-cover"
-                  />
+                  <Link
+                    to={getProfilePath(node.user_info)}
+                    className="shrink-0"
+                  >
+                    <img
+                      src={
+                        toAbsolute(node.user_info?.profile_image) ||
+                        "/dummyavatar.jpg"
+                      }
+                      alt={node.user_info?.name || node.user_username || "User"}
+                      className="w-9 h-9 rounded-full object-cover"
+                    />
+                  </Link>
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
-                      <div className="text-sm font-semibold text-gray-800">
-                        {node.user_username || "User"}
-                      </div>
+                      <Link
+                        to={getProfilePath(node.user_info)}
+                        className="text-sm font-semibold text-gray-800 hover:underline"
+                      >
+                        {node.user_info?.name || node.user_username || "User"}
+                      </Link>
                       <div className="text-xs text-gray-400">
                         {formatRelativeTime(node.created_at)}
                       </div>
