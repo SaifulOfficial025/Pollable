@@ -1,9 +1,18 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Button from "../../Shared/Button";
 import { API_BASE_URL } from "../../Redux/Config";
+import { followUser, unfollowUser } from "../../Redux/ProfileFollowUnfollow";
 
 function UserCard({ profile, loading, error }) {
   const isLoading = loading;
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    setIsFollowing(Boolean(profile?.is_following));
+    setFollowerCount(profile?.follower_count ?? 0);
+  }, [profile]);
 
   if (isLoading) {
     return (
@@ -30,8 +39,28 @@ function UserCard({ profile, loading, error }) {
   const username = profile?.username ? `@${profile.username}` : "";
   const biodata = profile?.biodata || "";
   const polls = profile?.poll_count ?? 0;
-  const followers = profile?.follower_count ?? 0;
   const following = profile?.following_count ?? 0;
+
+  const handleFollowToggle = async () => {
+    if (actionLoading || !profile?.id) return;
+    setActionLoading(true);
+    try {
+      if (isFollowing) {
+        await unfollowUser(profile.id);
+        setIsFollowing(false);
+        setFollowerCount((prev) => Math.max(0, prev - 1));
+      } else {
+        await followUser(profile.id);
+        setIsFollowing(true);
+        setFollowerCount((prev) => prev + 1);
+      }
+    } catch (err) {
+      // Silently ignore but you can surface this in UI if needed
+      console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 max-w-full">
@@ -59,7 +88,11 @@ function UserCard({ profile, loading, error }) {
 
         {!profile?.is_me && (
           <div className="flex-shrink-0 mt-4 md:mt-0 md:self-start w-full md:w-auto flex justify-center md:justify-start">
-            <Button label="Follow" />
+            <Button
+              label={isFollowing ? "Unfollow" : "Follow"}
+              onClick={handleFollowToggle}
+              disabled={actionLoading}
+            />
           </div>
         )}
       </div>
@@ -74,7 +107,7 @@ function UserCard({ profile, loading, error }) {
 
         <div className="flex-1 md:border-l md:border-r md:border-gray-100 md:px-6">
           <div className="text-2xl md:text-3xl font-semibold text-gray-800">
-            {followers}
+            {followerCount}
           </div>
           <div className="text-xs text-gray-500">Followers</div>
         </div>
