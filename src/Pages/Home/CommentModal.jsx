@@ -11,6 +11,8 @@ function CommentModal({ initialOpen = true, onClose, pollId, onCommentAdded }) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
+  const [currentUserAvatar, setCurrentUserAvatar] =
+    useState("/dummyavatar.jpg");
 
   const toThread = (items) => {
     const byId = new Map();
@@ -142,6 +144,21 @@ function CommentModal({ initialOpen = true, onClose, pollId, onCommentAdded }) {
     return "/user/";
   };
 
+  useEffect(() => {
+    const cached = localStorage.getItem("profileData");
+    if (!cached) return;
+
+    try {
+      const parsed = JSON.parse(cached);
+      const image =
+        parsed?.image_full_url || parsed?.profile_image || parsed?.image || "";
+      const absolute = toAbsolute(image);
+      if (absolute) setCurrentUserAvatar(absolute);
+    } catch {
+      // ignore malformed cache
+    }
+  }, []);
+
   if (!open) return null;
 
   return (
@@ -240,7 +257,7 @@ function CommentModal({ initialOpen = true, onClose, pollId, onCommentAdded }) {
         <div className="px-5 py-4 border-t border-gray-100">
           <div className="flex items-center gap-3">
             <img
-              src="/dummyavatar.jpg"
+              src={currentUserAvatar}
               alt="you"
               className="w-9 h-9 rounded-full object-cover"
             />

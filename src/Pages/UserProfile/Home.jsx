@@ -96,7 +96,7 @@ function Home() {
       <ul className="space-y-4">
         {followers.map((p) => {
           const profilePath = p.username
-            ? `/user/${encodeURIComponent(p.username)}`
+            ? `/user/${encodeURIComponent(p.username)}${p.id ? `?user_id=${encodeURIComponent(p.id)}` : ""}`
             : p.id
               ? `/user/?user_id=${encodeURIComponent(p.id)}`
               : "/user/";
@@ -148,7 +148,7 @@ function Home() {
       <ul className="space-y-4">
         {following.map((p) => {
           const profilePath = p.username
-            ? `/user/${encodeURIComponent(p.username)}`
+            ? `/user/${encodeURIComponent(p.username)}${p.id ? `?user_id=${encodeURIComponent(p.id)}` : ""}`
             : p.id
               ? `/user/?user_id=${encodeURIComponent(p.id)}`
               : "/user/";

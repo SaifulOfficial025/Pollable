@@ -4,7 +4,7 @@ import { GrHomeRounded } from "react-icons/gr";
 import { IoMdAddCircleOutline } from "react-icons/io";
 import { CgProfile } from "react-icons/cg";
 import { FaRegBookmark } from "react-icons/fa6";
-import { FiMessageCircle, FiCreditCard } from "react-icons/fi";
+import { FiMessageCircle, FiCreditCard, FiFileText } from "react-icons/fi";
 import { Link, useLocation } from "react-router-dom";
 
 function Sidebar({ savedDrafts = [], onSelectSavedDraft }) {
@@ -97,6 +97,35 @@ function Sidebar({ savedDrafts = [], onSelectSavedDraft }) {
                 }
               >
                 Saved Polls
+              </span>
+            </Link>
+
+            <Link
+              to="/drafts"
+              className={`flex items-center gap-3 px-3 py-2 rounded-md ${
+                location.pathname === "/drafts" ||
+                location.pathname === "/drafts/"
+                  ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] text-white"
+                  : "text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <FiFileText
+                className={`text-lg ${
+                  location.pathname === "/drafts" ||
+                  location.pathname === "/drafts/"
+                    ? "text-white"
+                    : "text-gray-700"
+                }`}
+              />
+              <span
+                className={
+                  location.pathname === "/drafts" ||
+                  location.pathname === "/drafts/"
+                    ? "font-semibold"
+                    : ""
+                }
+              >
+                Draft Polls
               </span>
             </Link>
 

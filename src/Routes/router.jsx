@@ -6,6 +6,7 @@ import UserProfile from "../Pages/UserProfile/Home";
 import PremiumHome from "../Pages/Premium/Home";
 import MessengerHome from "../Pages/Messenger/Home";
 import SavedPoll from "../Pages/Home/SavedPoll";
+import DraftPolls from "../Pages/Home/DraftPolls";
 import SignIn from "../Pages/Authentication/SignIn";
 import SignUp from "../Pages/Authentication/Signup";
 import RegOTPVerification from "../Pages/Authentication/RegOTPVerification";
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
       {
         path: "/saved",
         element: <SavedPoll />,
+      },
+      {
+        path: "/drafts",
+        element: <DraftPolls />,
       },
       {
         path: "*",

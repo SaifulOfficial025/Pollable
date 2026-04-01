@@ -118,7 +118,7 @@ export function createPollsSocket({
       safeSend({ action: "get_feed", limit, offset }),
     sendSearchPolls: ({ query = "", limit = 20, offset = 0 } = {}) =>
       safeSend({ action: "search_polls", query, limit, offset }),
-    sendGetTrending: ({ hours = 24, limit = 10 } = {}) =>
+    sendGetTrending: ({ hours = 150, limit = 10 } = {}) =>
       safeSend({ action: "get_trending", hours, limit }),
     sendGetMyDrafts: ({ limit = 20, offset = 0 } = {}) =>
       safeSend({ action: "get_my_drafts", limit, offset }),
@@ -214,7 +214,10 @@ export const normalizePoll = (poll) => {
     comments: poll.comments || poll.comment_count || 0,
     voteTotal: poll.vote_count || poll.total_votes || 0,
     Polloftheday: Boolean(poll.Polloftheday || poll.poll_of_the_day),
-    isOwner: Boolean(poll.is_owner),
+    isOwner: Boolean(poll.is_owner || poll.is_my_poll),
+    is_owner: Boolean(poll.is_owner),
+    is_my_poll: Boolean(poll.is_my_poll),
+    isMyPoll: Boolean(poll.is_my_poll || poll.is_owner),
     hasVoted: Boolean(poll.my_reaction?.is_voted),
     votedOptionId,
     userId: userId ?? null,

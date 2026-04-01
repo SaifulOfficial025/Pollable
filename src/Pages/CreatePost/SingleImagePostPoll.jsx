@@ -1,88 +1,94 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { IoImage } from "react-icons/io5";
 import Button from "../../Shared/Button";
 import ChooseTopicComponent from "./ChooseTopicComponent";
 import PollSettingsComponent from "./PollSettingsComponent";
-import { Link } from "react-router-dom";
 import uploadicon from "../../../public/uploadicon.svg";
 import { API_BASE_URL } from "../../Redux/Config";
+import {
+  createPoll,
+  fetchTopics,
+  getCachedTopics,
+} from "../../Redux/Polls/CreatingPoll";
+import { updatePoll } from "../../Redux/Polls/EditPolls";
 
-function SingleImagePostPoll({ isEmbedded = false }) {
+const FALLBACK_TOPICS = [
+  {
+    id: 1,
+    title: "Technology",
+    image:
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 2,
+    title: "Entertainment",
+    image:
+      "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 3,
+    title: "Sports",
+    image:
+      "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 4,
+    title: "News and Politics",
+    image:
+      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 5,
+    title: "Gaming",
+    image:
+      "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 6,
+    title: "Fashion",
+    image:
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 7,
+    title: "Animals and Nature",
+    image:
+      "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=80&w=800",
+  },
+  {
+    id: 8,
+    title: "Travel and Geography",
+    image:
+      "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=800",
+  },
+];
+
+function SingleImagePostPoll({
+  isEmbedded = false,
+  editData = null,
+  audience = "everyone",
+  isAnonymous = false,
+  onSuccess,
+}) {
   const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState(["Option 1", "Option 2"]);
+  const [options, setOptions] = useState(["", ""]);
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
   const fileInputRef = useRef(null);
   const [profileName, setProfileName] = useState("You");
   const [avatarUrl, setAvatarUrl] = useState("/dummyavatar.jpg");
-  const [topics] = useState([
-    {
-      name: "Technology",
-      img: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Entertainment",
-      img: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Sports",
-      img: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "News and Politics",
-      img: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Gaming",
-      img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Fashion",
-      img: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Animals and Nature",
-      img: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Travel and Geography",
-      img: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Health and Wellness",
-      img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Science and Education",
-      img: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Community",
-      img: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Lifestyle",
-      img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Art & Design",
-      img: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Food and Drink",
-      img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Business",
-      img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-      name: "Humor",
-      img: "https://images.unsplash.com/photo-1517638851339-a711cfcf3279?auto=format&fit=crop&q=80&w=800",
-    },
-  ]);
+  const [topics, setTopics] = useState([]);
+  const [topicsLoading, setTopicsLoading] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [allowComments, setAllowComments] = useState(true);
+  const [hashtags, setHashtags] = useState([]);
+  const [hashtagInput, setHashtagInput] = useState("");
+  const [durationHours, setDurationHours] = useState(24);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitMessage, setSubmitMessage] = useState("");
+  const topicsFetchedRef = useRef(false);
 
   useEffect(() => {
     const cached = localStorage.getItem("profileData");
@@ -104,8 +110,107 @@ function SingleImagePostPoll({ isEmbedded = false }) {
     }
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    if (topicsFetchedRef.current) return;
+    topicsFetchedRef.current = true;
+
+    const cached = getCachedTopics();
+    if (cached?.length) {
+      setTopics(cached);
+      setTopicsLoading(false);
+      return;
+    }
+
+    const loadTopics = async () => {
+      setTopicsLoading(true);
+      try {
+        const data = await fetchTopics();
+        if (isMounted) setTopics(data);
+      } catch {
+        if (isMounted) setTopics(FALLBACK_TOPICS);
+      } finally {
+        if (isMounted) setTopicsLoading(false);
+      }
+    };
+
+    loadTopics();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!editData) {
+      setQuestion("");
+      setOptions(["", ""]);
+      setSelectedTopics([]);
+      setHashtags([]);
+      setAllowComments(true);
+      setDurationHours(24);
+      setUploadedImage(null);
+      setUploadedFile(null);
+      return;
+    }
+
+    setQuestion(editData.title || "");
+
+    const nextOptions = (
+      Array.isArray(editData.options) ? editData.options : []
+    )
+      .map((o) => o?.title || "")
+      .filter(Boolean);
+    setOptions(nextOptions.length >= 2 ? nextOptions : ["", ""]);
+
+    const topicIds = Array.isArray(editData.topics)
+      ? editData.topics
+          .map((t) => (typeof t === "object" ? t.id : t))
+          .filter((t) => t !== null && t !== undefined)
+      : [];
+    setSelectedTopics(topicIds);
+
+    const nextTags = Array.isArray(editData.tags)
+      ? editData.tags
+          .map((tag) => {
+            if (typeof tag === "string") return tag;
+            return tag?.name || tag?.title || "";
+          })
+          .filter(Boolean)
+      : [];
+    setHashtags(nextTags);
+
+    setAllowComments(
+      typeof editData.allow_comment === "boolean"
+        ? editData.allow_comment
+        : true,
+    );
+    setDurationHours(
+      editData.duration !== null && editData.duration !== undefined
+        ? Number(editData.duration)
+        : 24,
+    );
+
+    const existingImage =
+      editData.image_full_url ||
+      editData.image_url ||
+      editData.image ||
+      editData.bannerImage ||
+      null;
+    setUploadedImage(existingImage);
+    setUploadedFile(null);
+  }, [editData]);
+
   function addOption() {
-    setOptions((s) => [...s, `Option ${s.length + 1}`]);
+    setOptions((s) => [...s, ""]);
+  }
+
+  function removeOption(i) {
+    setOptions((s) => {
+      if (s.length <= 2) return s;
+      return s.filter((_, idx) => idx !== i);
+    });
   }
 
   function updateOption(i, value) {
@@ -124,11 +229,127 @@ function SingleImagePostPoll({ isEmbedded = false }) {
     });
   }
 
+  function addHashtag() {
+    const trimmed = hashtagInput.trim();
+    if (!trimmed) return;
+    if (hashtags.length >= 5) return;
+    if (hashtags.some((tag) => tag.toLowerCase() === trimmed.toLowerCase())) {
+      setHashtagInput("");
+      return;
+    }
+    setHashtags((s) => [...s, trimmed]);
+    setHashtagInput("");
+  }
+
+  function removeHashtag(tag) {
+    setHashtags((s) => s.filter((t) => t !== tag));
+  }
+
+  const fileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        resolve(typeof result === "string" ? result : "");
+      };
+      reader.onerror = () => reject(new Error("Unable to read file"));
+      reader.readAsDataURL(file);
+    });
+
+  function resetSubmitState() {
+    setSubmitError("");
+    setSubmitMessage("");
+  }
+
+  async function handleSubmit(isDraft = false) {
+    resetSubmitState();
+
+    const questionText = question.trim();
+    if (!questionText) {
+      setSubmitError("Please enter a question before publishing.");
+      return;
+    }
+
+    const optionPayload = options
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .map((title) => ({ title }));
+
+    if (optionPayload.length < 2) {
+      setSubmitError("Please provide at least two options.");
+      return;
+    }
+
+    let imageBase64 = null;
+    if (uploadedFile) {
+      try {
+        imageBase64 = await fileToBase64(uploadedFile);
+      } catch {
+        setSubmitError("Unable to read the image file.");
+        return;
+      }
+    }
+
+    const payload = {
+      title: questionText,
+      duration: durationHours === null ? 0 : Number(durationHours),
+      allow_comment: allowComments,
+      privacy: audience,
+      is_anonymous: Boolean(isAnonymous),
+      is_draft: Boolean(isDraft),
+      options: optionPayload,
+      topics: selectedTopics,
+      tags: hashtags,
+      image: imageBase64,
+    };
+
+    setIsSubmitting(true);
+    try {
+      if (editData?.id) {
+        await updatePoll(editData.id, payload);
+      } else {
+        await createPoll(payload);
+      }
+      setSubmitMessage(
+        editData?.id
+          ? isDraft
+            ? "Draft updated."
+            : "Poll updated."
+          : isDraft
+            ? "Draft saved."
+            : "Poll published.",
+      );
+      onSuccess?.(
+        editData?.id
+          ? isDraft
+            ? "Draft updated successfully."
+            : "Poll updated successfully."
+          : isDraft
+            ? "Draft saved successfully."
+            : "Poll published successfully.",
+        { reloadPage: Boolean(editData?.id) },
+      );
+      if (!isDraft) {
+        setQuestion("");
+        setOptions(["", ""]);
+        setHashtags([]);
+        setSelectedTopics([]);
+        setUploadedImage(null);
+        setUploadedFile(null);
+      }
+    } catch (err) {
+      setSubmitError(err.message || "Failed to save poll.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
       setUploadedImage(url);
+      setUploadedFile(file);
     }
   };
 
@@ -194,12 +415,23 @@ function SingleImagePostPoll({ isEmbedded = false }) {
             <label className="text-md text-gray-600">Answer Options</label>
             <div className="space-y-3 mt-3">
               {options.map((opt, i) => (
-                <input
-                  key={i}
-                  value={opt}
-                  onChange={(e) => updateOption(i, e.target.value)}
-                  className="w-full bg-white border border-gray-100 rounded-full px-4 py-3 text-sm shadow-sm"
-                />
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    value={opt}
+                    onChange={(e) => updateOption(i, e.target.value)}
+                    placeholder={`Option ${i + 1}`}
+                    className="w-full bg-white border border-gray-100 rounded-full px-4 py-3 text-sm shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeOption(i)}
+                    disabled={options.length <= 2}
+                    className="w-9 h-9 rounded-full border border-red-200 text-red-500 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label={`Remove option ${i + 1}`}
+                  >
+                    &times;
+                  </button>
+                </div>
               ))}
             </div>
 
@@ -217,10 +449,68 @@ function SingleImagePostPoll({ isEmbedded = false }) {
           selectedTopics={selectedTopics}
           toggleTopic={toggleTopic}
         />
+        {topicsLoading && !topics.length && (
+          <p className="text-xs text-gray-400 mt-1">Loading topics...</p>
+        )}
+
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-md font-semibold text-gray-800">Hashtags</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Add up to 5 hashtags to improve discoverability
+              </p>
+            </div>
+            <div className="text-xs text-gray-400">{hashtags.length}/5</div>
+          </div>
+
+          <div className="mt-3 flex gap-2">
+            <input
+              value={hashtagInput}
+              onChange={(e) => setHashtagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addHashtag();
+                }
+              }}
+              placeholder="#addhashtag"
+              className="flex-1 bg-gray-50 border border-gray-100 rounded-full px-4 py-2.5 text-sm"
+            />
+            <button
+              onClick={addHashtag}
+              className="px-3 py-2 rounded-md border border-gray-200 text-sm text-gray-700 bg-white"
+            >
+              Add
+            </button>
+          </div>
+
+          {hashtags.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {hashtags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full"
+                >
+                  #{tag}
+                  <button
+                    onClick={() => removeHashtag(tag)}
+                    className="text-blue-500 hover:text-blue-700"
+                    aria-label={`Remove ${tag}`}
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         <PollSettingsComponent
           allowComments={allowComments}
           setAllowComments={setAllowComments}
+          durationHours={durationHours}
+          setDurationHours={setDurationHours}
         />
       </div>
 
@@ -278,13 +568,39 @@ function SingleImagePostPoll({ isEmbedded = false }) {
           </div>
 
           <div className="mt-4 flex items-center justify-between">
-            <button className="px-4 py-2 rounded-md border border-gray-200 text-sm text-gray-700 bg-white">
+            <button
+              onClick={() => handleSubmit(true)}
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-md border border-gray-200 text-sm text-gray-700 bg-white disabled:opacity-60"
+            >
               Save as Draft
             </button>
             <div>
-              <Button label="Publish Poll" />
+              <Button
+                label={
+                  isSubmitting
+                    ? editData?.id
+                      ? "Saving..."
+                      : "Publishing..."
+                    : editData?.id
+                      ? "Save Changes"
+                      : "Publish Poll"
+                }
+                onClick={() => handleSubmit(false)}
+                disabled={isSubmitting}
+              />
             </div>
           </div>
+
+          {(submitError || submitMessage) && (
+            <div
+              className={`mt-2 text-sm ${
+                submitError ? "text-red-600" : "text-green-600"
+              }`}
+            >
+              {submitError || submitMessage}
+            </div>
+          )}
         </div>
       </div>
     </div>

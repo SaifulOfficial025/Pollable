@@ -11,6 +11,8 @@ import { Link } from "react-router-dom";
 import { createVote } from "../../Redux/Polls/VoteCreate";
 import { togglePollReaction } from "../../Redux/Polls/PollReaction";
 import { bookmarkPoll, reportPoll } from "../../Redux/Polls/ReportBookmark";
+import { deletePoll } from "../../Redux/Polls/DeletePoll";
+import { fetchPollById } from "../../Redux/Polls/EditPolls";
 
 function PollCardwithMultiImage({ pollData }) {
   const [liked, setLiked] = useState(false);
@@ -31,6 +33,7 @@ function PollCardwithMultiImage({ pollData }) {
   const [reportReason, setReportReason] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   const menuRef = useRef(null);
 
@@ -96,6 +99,10 @@ function PollCardwithMultiImage({ pollData }) {
     votedOptionId = null,
     isReacted = false,
   } = pollData || {};
+
+  const isOwnPoll = Boolean(
+    isOwner || pollData?.is_my_poll || pollData?.is_owner || pollData?.isMyPoll,
+  );
 
   const voteTotalFromData = pollData?.voteTotal ?? pollData?.vote_count ?? 0;
 
@@ -201,17 +208,27 @@ function PollCardwithMultiImage({ pollData }) {
     }
   };
 
-  const handleEdit = () => {
-    // Dispatch custom event to open the CreatePost modal with poll data
-    const event = new CustomEvent("openPostPoll", { detail: pollData });
-    window.dispatchEvent(event);
-    setShowMenu(false);
+  const handleEdit = async () => {
+    try {
+      const fullPoll = await fetchPollById(pollData?.id);
+      const event = new CustomEvent("openPostPoll", { detail: fullPoll });
+      window.dispatchEvent(event);
+    } catch (err) {
+      showToast("error", err?.message || "Unable to load poll for editing.");
+    } finally {
+      setShowMenu(false);
+    }
   };
 
-  const handleDelete = () => {
-    // Add delete functionality here
-    console.log("Delete poll", pollData);
-    setShowMenu(false);
+  const handleDelete = async () => {
+    try {
+      await deletePoll(pollData?.id);
+      setIsDeleted(true);
+      setShowMenu(false);
+    } catch (err) {
+      showToast("error", err?.message || "Unable to delete poll.");
+      setShowMenu(false);
+    }
   };
 
   const handleReact = async () => {
@@ -261,6 +278,8 @@ function PollCardwithMultiImage({ pollData }) {
       setShowMenu(false);
     }
   };
+
+  if (isDeleted) return null;
 
   // Dynamic grid layout based on number of options
   const getGridCols = () => {
@@ -317,8 +336,46 @@ function PollCardwithMultiImage({ pollData }) {
 
             {showMenu && (
               <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-100 rounded-xl shadow-lg py-2 z-20 text-sm">
-                {isOwner ? (
-                  // Owner's menu: Edit and Delete
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAnonymous((prev) => !prev);
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-2.5 gap-3 text-sm font-medium rounded-lg bg-white hover:bg-gray-50 text-gray-800 transition-colors duration-150 cursor-pointer"
+                >
+                  <img
+                    src="/anonymous.svg"
+                    alt="anonymous vote"
+                    className="w-5 h-5"
+                  />
+                  <span className="font-semibold text-md flex-1 text-left">
+                    Vote Anonymously?
+                  </span>
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsAnonymous((prev) => !prev);
+                    }}
+                    className={`ml-2 w-9 h-5 rounded-full flex items-center px-0.5 transition-colors duration-150 ${
+                      isAnonymous
+                        ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] justify-end"
+                        : "bg-gray-300 justify-start"
+                    }`}
+                  >
+                    <span className="w-4 h-4 bg-white rounded-full shadow-sm" />
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBookmark}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700"
+                >
+                  <IoBookmarkOutline className="w-5 h-5" />
+                  <span className="font-semibold text-md">Bookmark</span>
+                </button>
+
+                {isOwnPoll ? (
                   <>
                     <button
                       type="button"
@@ -338,58 +395,17 @@ function PollCardwithMultiImage({ pollData }) {
                     </button>
                   </>
                 ) : (
-                  // Non-owner's menu: Vote Anonymously, Bookmark, Report
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAnonymous((prev) => !prev);
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center justify-between px-4 py-2.5 gap-3 text-sm font-medium rounded-lg bg-white hover:bg-gray-50 text-gray-800 transition-colors duration-150 cursor-pointer"
-                    >
-                      <img
-                        src="/anonymous.svg"
-                        alt="anonymous vote"
-                        className="w-5 h-5"
-                      />
-                      <span className="font-semibold text-md flex-1 text-left">
-                        Vote Anonymously?
-                      </span>
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsAnonymous((prev) => !prev);
-                        }}
-                        className={`ml-2 w-9 h-5 rounded-full flex items-center px-0.5 transition-colors duration-150 ${
-                          isAnonymous
-                            ? "bg-gradient-to-r from-[#4a90e2] to-[#7c3bed] justify-end"
-                            : "bg-gray-300 justify-start"
-                        }`}
-                      >
-                        <span className="w-4 h-4 bg-white rounded-full shadow-sm" />
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleBookmark}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700"
-                    >
-                      <IoBookmarkOutline className="w-5 h-5" />
-                      <span className="font-semibold text-md">Bookmark</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowReportModal(true);
-                        setShowMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-red-500"
-                    >
-                      <FiFlag className="w-5 h-5" />
-                      <span className="font-semibold text-md">Report</span>
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReportModal(true);
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-red-500"
+                  >
+                    <FiFlag className="w-5 h-5" />
+                    <span className="font-semibold text-md">Report</span>
+                  </button>
                 )}
               </div>
             )}

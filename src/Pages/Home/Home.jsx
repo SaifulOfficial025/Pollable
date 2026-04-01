@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Container from "../../Layout/Container/Container";
 import Header from "./Header";
 import PollCard from "./PollCard";
@@ -28,6 +28,8 @@ const Home = () => {
   const [pollOfTheDay, setPollOfTheDay] = useState(null);
   const [trendingPolls, setTrendingPolls] = useState([]);
   const [savedDrafts, setSavedDrafts] = useState([]);
+  const pendingFeedResetRef = useRef(false);
+  const delayedResetTimerRef = useRef(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -165,6 +167,14 @@ const Home = () => {
             .map((p) => normalizePoll(p))
             .filter(Boolean);
           setSavedDrafts(normalizedDrafts);
+          if (normalizedDrafts.length) {
+            localStorage.setItem(
+              "lastDraftPoll",
+              JSON.stringify(normalizedDrafts[0]),
+            );
+          } else {
+            localStorage.removeItem("lastDraftPoll");
+          }
           return;
         }
 
@@ -277,6 +287,21 @@ const Home = () => {
     setOffset((o) => o + limit);
   };
 
+  const refreshFeedNow = useCallback(() => {
+    if (!socketRef.current) return;
+
+    setPolls([]);
+    setHasMore(true);
+    setHasReceivedData(false);
+    setIsLoading(true);
+    setOffset(0);
+
+    socketRef.current.sendGetFeed({ limit, offset: 0 });
+    socketRef.current.sendGetTrending({ hours: 24, limit: 10 });
+    socketRef.current.sendGetMyDrafts({ limit: 20, offset: 0 });
+    setOffset(limit);
+  }, [limit]);
+
   // Prefetch when user reaches the 8th poll of current batch
   useEffect(() => {
     if (!polls.length) return;
@@ -306,22 +331,38 @@ const Home = () => {
   // Allow external triggers (Home button/logo) to reset feed without a full reload
   useEffect(() => {
     const resetFeed = () => {
-      if (!socketReady || !socketRef.current) return;
-      setPolls([]);
-      setHasMore(true);
-      setHasReceivedData(false);
-      setIsLoading(true);
-      setOffset(0);
-      socketRef.current.sendGetFeed({ limit, offset: 0 });
-      socketRef.current.sendGetTrending({ hours: 24, limit: 10 });
-      socketRef.current.sendGetMyDrafts({ limit: 20, offset: 0 });
-      setOffset(limit);
+      if (!socketReady || !socketRef.current) {
+        pendingFeedResetRef.current = true;
+        return;
+      }
+
+      refreshFeedNow();
+
+      // Run one delayed pass to catch eventual consistency after writes.
+      if (delayedResetTimerRef.current) {
+        window.clearTimeout(delayedResetTimerRef.current);
+      }
+      delayedResetTimerRef.current = window.setTimeout(() => {
+        if (socketRef.current && socketReady) {
+          refreshFeedNow();
+        }
+      }, 1200);
     };
 
-    const handler = () => resetFeed();
-    window.addEventListener("resetHomeFeed", handler);
-    return () => window.removeEventListener("resetHomeFeed", handler);
-  }, [socketReady]);
+    window.addEventListener("resetHomeFeed", resetFeed);
+    return () => {
+      window.removeEventListener("resetHomeFeed", resetFeed);
+      if (delayedResetTimerRef.current) {
+        window.clearTimeout(delayedResetTimerRef.current);
+      }
+    };
+  }, [socketReady, refreshFeedNow]);
+
+  useEffect(() => {
+    if (!socketReady || !pendingFeedResetRef.current) return;
+    pendingFeedResetRef.current = false;
+    refreshFeedNow();
+  }, [socketReady, refreshFeedNow]);
 
   return (
     <div className="min-h-screen  ">
@@ -330,7 +371,7 @@ const Home = () => {
         <Header onSearch={handleSearch} />
       </div>
 
-      <div className=" mx-auto px-4 sm:px-6 lg:px-16 mt-6 max-w-[1536px] mx-auto">
+      <div className="mx-auto px-4 sm:px-6 lg:px-16 mt-6 max-w-[1536px]">
         <div className="grid grid-cols-12 gap-6">
           {/* Sidebar - Sticky */}
           <div className="col-span-12 lg:col-span-2">

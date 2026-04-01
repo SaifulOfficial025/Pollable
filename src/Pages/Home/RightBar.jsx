@@ -161,7 +161,7 @@ function RightBar({
       </div>
 
       {/* Trending Polls */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 overflow-x-hidden">
         <div className="flex items-center gap-2">
           <IoMdTrendingUp className="text-purple-600 text-xl" />
           <h4 className="text-md font-semibold text-gray-800">
@@ -169,7 +169,7 @@ function RightBar({
           </h4>
         </div>
         {activeTrendingPolls.length ? (
-          <ul className="mt-3 space-y-3 text-sm text-black max-h-80 overflow-y-auto pr-1">
+          <ul className="mt-3 space-y-3 text-sm text-black max-h-80 overflow-y-auto pr-1 overflow-x-hidden">
             {activeTrendingPolls.map((poll, idx) => {
               const votesLabel = `${Number(poll.voteTotal || 0).toLocaleString()} votes`;
               const borderClass = idx === 0 ? "" : "border-t pt-3";
