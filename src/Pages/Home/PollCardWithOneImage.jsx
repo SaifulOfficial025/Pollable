@@ -515,7 +515,7 @@ function PollCardWithOneImage({ pollData }) {
         </div>
 
         {hasVoted && (
-          <div className={`mt-4 text-sm ${voteTextClass}`}>
+          <div className={`mt-4 text-sm text-center ${voteTextClass}`}>
             Total votes: {localVoteTotal.toLocaleString()}
           </div>
         )}

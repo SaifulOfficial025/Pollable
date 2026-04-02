@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Container from "../../Layout/Container/Container";
 import Header from "./Header";
 import PollCard from "./PollCard";
@@ -12,6 +13,7 @@ import { API_BASE_URL } from "../../Redux/Config";
 import { createPollsSocket, normalizePoll } from "../../Redux/Polls/FetchPolls";
 
 const Home = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState("/dummyavatar.jpg");
   const [polls, setPolls] = useState([]);
@@ -31,7 +33,38 @@ const Home = () => {
   const pendingFeedResetRef = useRef(false);
   const delayedResetTimerRef = useRef(null);
 
+  const isAuthenticated = Boolean(
+    localStorage.getItem("accessToken") ||
+    sessionStorage.getItem("accessToken"),
+  );
+
   useEffect(() => {
+    if (isAuthenticated) return;
+
+    let redirected = false;
+    const redirectToSignIn = () => {
+      if (redirected) return;
+      redirected = true;
+      navigate("/signin", { replace: true });
+    };
+
+    // Allow guests to preview the home feed briefly like social apps.
+    const previewTimer = window.setTimeout(redirectToSignIn, 8000);
+    const handleInteraction = () => {
+      redirectToSignIn();
+    };
+
+    window.addEventListener("pointerdown", handleInteraction);
+
+    return () => {
+      window.clearTimeout(previewTimer);
+      window.removeEventListener("pointerdown", handleInteraction);
+    };
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     const loadProfile = async () => {
       const cached = localStorage.getItem("profileData");
       if (cached) {
@@ -75,9 +108,11 @@ const Home = () => {
     };
 
     loadProfile();
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     let closed = false;
 
     const socketInstance = createPollsSocket({
@@ -232,7 +267,7 @@ const Home = () => {
       closed = true;
       socketInstance?.close?.();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   // initial fetch
   useEffect(() => {
@@ -330,6 +365,8 @@ const Home = () => {
 
   // Allow external triggers (Home button/logo) to reset feed without a full reload
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const resetFeed = () => {
       if (!socketReady || !socketRef.current) {
         pendingFeedResetRef.current = true;
@@ -356,13 +393,14 @@ const Home = () => {
         window.clearTimeout(delayedResetTimerRef.current);
       }
     };
-  }, [socketReady, refreshFeedNow]);
+  }, [isAuthenticated, socketReady, refreshFeedNow]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     if (!socketReady || !pendingFeedResetRef.current) return;
     pendingFeedResetRef.current = false;
     refreshFeedNow();
-  }, [socketReady, refreshFeedNow]);
+  }, [isAuthenticated, socketReady, refreshFeedNow]);
 
   return (
     <div className="min-h-screen  ">
