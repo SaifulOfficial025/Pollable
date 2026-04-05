@@ -49,7 +49,7 @@ const Home = () => {
     };
 
     // Allow guests to preview the home feed briefly like social apps.
-    const previewTimer = window.setTimeout(redirectToSignIn, 8000);
+    const previewTimer = window.setTimeout(redirectToSignIn, 20000);
     const handleInteraction = () => {
       redirectToSignIn();
     };
@@ -111,8 +111,6 @@ const Home = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-
     let closed = false;
 
     const socketInstance = createPollsSocket({

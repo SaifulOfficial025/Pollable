@@ -60,6 +60,16 @@ const formatRelativeTime = (value) => {
 
 export const POLLS_WS_URL = "ws://10.10.13.95:8500/ws/polls/";
 
+const resolvePollsWsUrl = () => {
+  const configured = (POLLS_WS_URL || "").trim();
+  if (configured.startsWith("ws://") || configured.startsWith("wss://")) {
+    return configured;
+  }
+
+  // Never allow a relative websocket URL fallback in feed connections.
+  return "ws://10.10.13.95:8500/ws/polls/";
+};
+
 export function createPollsSocket({
   onMessage,
   onError,
@@ -67,11 +77,9 @@ export function createPollsSocket({
   onClose,
 } = {}) {
   const token = getStoredAccessToken();
-  if (!token) {
-    throw new Error("No access token found. Please sign in again.");
-  }
-
-  const socket = new WebSocket(`${POLLS_WS_URL}?token=${token}`);
+  const baseUrl = resolvePollsWsUrl();
+  const socketUrl = token ? `${baseUrl}?token=${token}` : baseUrl;
+  const socket = new WebSocket(socketUrl);
   const pending = [];
 
   const flush = () => {

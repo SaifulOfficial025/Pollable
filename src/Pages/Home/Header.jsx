@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import NotificationModal from "./NotificationModal";
 import { fetchProfile } from "../../Redux/Auth/Profile";
 import { API_BASE_URL } from "../../Redux/Config";
+import Button from "../../Shared/Button";
 
 function Header({ onSearch }) {
   const [open, setOpen] = useState(false);
@@ -21,6 +22,10 @@ function Header({ onSearch }) {
   const [profile, setProfile] = useState(null);
   const menuRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const isAuthenticated = Boolean(
+    localStorage.getItem("accessToken") ||
+    sessionStorage.getItem("accessToken"),
+  );
 
   useEffect(() => {
     function handleClick(e) {
@@ -38,14 +43,7 @@ function Header({ onSearch }) {
         localStorage.getItem("accessToken") ||
         sessionStorage.getItem("accessToken");
       if (!token) {
-        const cached = localStorage.getItem("profileData");
-        if (cached) {
-          try {
-            setProfile(JSON.parse(cached));
-          } catch {
-            setProfile(null);
-          }
-        }
+        setProfile(null);
         return;
       }
 
@@ -69,7 +67,7 @@ function Header({ onSearch }) {
     };
 
     loadProfile();
-  }, []);
+  }, [isAuthenticated]);
 
   const menuItems = [
     { label: "Settings", Icon: CiSettings },
@@ -138,66 +136,78 @@ function Header({ onSearch }) {
 
         {/* Right actions */}
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => setNotifyOpen(true)}
-            className="relative p-2 rounded-md hover:bg-gray-50"
-          >
-            <IoMdNotificationsOutline className="text-xl text-gray-600" />
-            <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white -translate-y-1/2 translate-x-1/2" />
-          </button>
+          {isAuthenticated ? (
+            <>
+              <button
+                onClick={() => setNotifyOpen(true)}
+                className="relative p-2 rounded-md hover:bg-gray-50"
+              >
+                <IoMdNotificationsOutline className="text-xl text-gray-600" />
+                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white -translate-y-1/2 translate-x-1/2" />
+              </button>
 
-          <div className="flex items-center gap-2" ref={menuRef}>
-            <img
-              src={profileImageUrl}
-              alt="avatar"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-            <span className="hidden md:block text-sm text-gray-700 max-w-[120px] truncate">
-              {profileName}
-            </span>
-            <button
-              onClick={() => setOpen((s) => !s)}
-              className="flex items-center gap-1 text-gray-600 hover:text-gray-800"
-              aria-haspopup="true"
-              aria-expanded={open}
-            >
-              <MdOutlineKeyboardArrowDown className="text-lg" />
-            </button>
+              <div className="flex items-center gap-2" ref={menuRef}>
+                <img
+                  src={profileImageUrl}
+                  alt="avatar"
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+                <span className="hidden md:block text-sm text-gray-700 max-w-[120px] truncate">
+                  {profileName}
+                </span>
+                <button
+                  onClick={() => setOpen((s) => !s)}
+                  className="flex items-center gap-1 text-gray-600 hover:text-gray-800"
+                  aria-haspopup="true"
+                  aria-expanded={open}
+                >
+                  <MdOutlineKeyboardArrowDown className="text-lg" />
+                </button>
 
-            {open && (
-              <div className="absolute right-4 top-16 w-56 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
-                <ul className="py-2">
-                  {menuItems.map(({ label, Icon }, i) => (
-                    <li
-                      key={i}
-                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm text-gray-700"
-                      onClick={() => {
-                        setOpen(false);
-                        switch (label) {
-                          case "Settings":
-                            navigate("/settings");
-                            break;
-                          case "Recent Activity":
-                            navigate("/activity");
-                            break;
-                          case "Log out":
-                            localStorage.clear();
-                            sessionStorage.clear();
-                            navigate("/signin");
-                            break;
-                          default:
-                            break;
-                        }
-                      }}
-                    >
-                      <Icon className="text-lg text-gray-500" />
-                      <span>{label}</span>
-                    </li>
-                  ))}
-                </ul>
+                {open && (
+                  <div className="absolute right-4 top-16 w-56 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
+                    <ul className="py-2">
+                      {menuItems.map(({ label, Icon }, i) => (
+                        <li
+                          key={i}
+                          className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm text-gray-700"
+                          onClick={() => {
+                            setOpen(false);
+                            switch (label) {
+                              case "Settings":
+                                navigate("/settings");
+                                break;
+                              case "Recent Activity":
+                                navigate("/activity");
+                                break;
+                              case "Log out":
+                                localStorage.clear();
+                                sessionStorage.clear();
+                                navigate("/signin");
+                                break;
+                              default:
+                                break;
+                            }
+                          }}
+                        >
+                          <Icon className="text-lg text-gray-500" />
+                          <span>{label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <Button
+              onClick={() => navigate("/signin")}
+              size="md"
+              className="px-5"
+            >
+              Log in
+            </Button>
+          )}
         </div>
         {notifyOpen && (
           <NotificationModal

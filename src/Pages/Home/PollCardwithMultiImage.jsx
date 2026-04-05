@@ -13,6 +13,7 @@ import { togglePollReaction } from "../../Redux/Polls/PollReaction";
 import { bookmarkPoll, reportPoll } from "../../Redux/Polls/ReportBookmark";
 import { deletePoll } from "../../Redux/Polls/DeletePoll";
 import { fetchPollById } from "../../Redux/Polls/EditPolls";
+import VoteUsersandReactionModal from "./VoteUsersandReactionModal";
 
 function PollCardwithMultiImage({ pollData }) {
   const [liked, setLiked] = useState(false);
@@ -34,6 +35,9 @@ function PollCardwithMultiImage({ pollData }) {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [showVoteUsersModal, setShowVoteUsersModal] = useState(false);
+  const [activeVotersOption, setActiveVotersOption] = useState(null);
+  const [peopleModalType, setPeopleModalType] = useState("vote");
 
   const menuRef = useRef(null);
 
@@ -279,6 +283,23 @@ function PollCardwithMultiImage({ pollData }) {
     }
   };
 
+  const openVotersModalForOption = (opt) => {
+    const optionId = opt?.id || opt?.option_id;
+    if (!optionId) return;
+    setPeopleModalType("vote");
+    setActiveVotersOption({
+      id: optionId,
+      label: opt?.label || opt?.title || "this option",
+    });
+    setShowVoteUsersModal(true);
+  };
+
+  const openReactionPeopleModal = () => {
+    setPeopleModalType("reaction");
+    setActiveVotersOption(null);
+    setShowVoteUsersModal(true);
+  };
+
   if (isDeleted) return null;
 
   // Dynamic grid layout based on number of options
@@ -427,8 +448,14 @@ function PollCardwithMultiImage({ pollData }) {
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => handleVote(opt.id)}
-                disabled={hasVoted || isVoting}
+                onClick={() => {
+                  if (hasVoted) {
+                    openVotersModalForOption(opt);
+                    return;
+                  }
+                  handleVote(opt.id);
+                }}
+                disabled={isVoting}
                 className="relative group focus:outline-none disabled:cursor-not-allowed"
               >
                 <div className="relative aspect-square rounded-xl overflow-hidden transition-transform duration-150 ease-out hover:scale-[1.02]">
@@ -499,9 +526,13 @@ function PollCardwithMultiImage({ pollData }) {
                   )}
                 </span>
               </button>
-              <span className="text-gray-700 text-xs sm:text-sm">
+              <button
+                type="button"
+                onClick={openReactionPeopleModal}
+                className="text-gray-700 text-xs sm:text-sm hover:text-blue-600"
+              >
                 {likesCount}
-              </span>
+              </button>
             </div>
 
             <div className="flex items-center justify-center gap-1 sm:gap-2">
@@ -554,6 +585,26 @@ function PollCardwithMultiImage({ pollData }) {
           initialOpen={true}
           pollId={pollData?.id}
           onClose={() => setShowDemographics(false)}
+        />
+      )}
+      {showVoteUsersModal && (
+        <VoteUsersandReactionModal
+          initialOpen={true}
+          title={
+            peopleModalType === "reaction"
+              ? "Reacted By"
+              : `Voters for ${activeVotersOption?.label || "option"}`
+          }
+          pollId={pollData?.id}
+          mode={peopleModalType}
+          optionId={
+            peopleModalType === "vote" ? activeVotersOption?.id : undefined
+          }
+          onClose={() => {
+            setShowVoteUsersModal(false);
+            setActiveVotersOption(null);
+            setPeopleModalType("vote");
+          }}
         />
       )}
       {showReportModal && (
